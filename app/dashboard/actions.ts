@@ -14,13 +14,18 @@ export async function addLead(prevState: any, formData: FormData) {
     const location = formData.get('location') as string
     const note = formData.get('note') as string
     const status = formData.get('status') as string
+    const secondaryPhone = formData.get('secondaryPhone') as string
 
-    // Validation
-    if (!leadName || !phone || !email) {
-        return { error: 'Name, Phone, and Email are required.', success: false, message: '' }
+    // Validation - At least one contact method required
+    if (!phone && !email && !secondaryPhone) {
+        return { error: 'At least one contact method (Phone, Email, or Secondary Phone) is required.', success: false, message: '' }
     }
 
-    if (phone.length !== 10 || !/^\d+$/.test(phone)) {
+    if (!leadName) {
+        return { error: 'Lead Name is required.', success: false, message: '' }
+    }
+
+    if (phone && (phone.length !== 10 || !/^\d+$/.test(phone))) {
         return { error: 'Phone number must be exactly 10 digits.', success: false, message: '' }
     }
 
@@ -34,8 +39,9 @@ export async function addLead(prevState: any, formData: FormData) {
         .from('leads')
         .insert({
             lead_name: leadName,
-            phone,
-            email,
+            phone: phone || null,
+            secondary_phone: secondaryPhone || null,
+            email: email || null,
             location,
             note,
             status: status || 'New',
@@ -101,11 +107,27 @@ export async function updateLead(prevState: any, formData: FormData) {
     const location = formData.get('location')
     const note = formData.get('note')
     const status = formData.get('status')
+    const phone = formData.get('phone') as string
+    const email = formData.get('email') as string
+    const secondaryPhone = formData.get('secondaryPhone')
+
+    // Validation - At least one contact method
+    if (!phone && !email && !secondaryPhone) {
+        return { error: 'At least one contact method (Phone, Email, or Secondary Phone) is required.', success: false, message: '' }
+    }
+
+    // Check phone valid if present
+    if (phone && (phone.length !== 10 || !/^\d+$/.test(phone))) {
+        return { error: 'Phone number must be exactly 10 digits.', success: false, message: '' }
+    }
 
     const { error } = await supabase
         .from('leads')
         .update({
             lead_name: leadName,
+            phone: phone || null,
+            email: email || null,
+            secondary_phone: secondaryPhone || null,
             location,
             note,
             status,
@@ -114,6 +136,10 @@ export async function updateLead(prevState: any, formData: FormData) {
         .eq('id', id)
 
     if (error) {
+        if (error.code === '23505') {
+            if (error.message.includes('phone')) return { error: 'Phone number already exists.', success: false, message: '' }
+            if (error.message.includes('email')) return { error: 'Email already exists.', success: false, message: '' }
+        }
         return { error: 'Failed to update lead', success: false, message: '' }
     }
 
@@ -226,7 +252,10 @@ export async function deleteComment(id: number, leadId?: number) {
         .update({ is_deleted: true })
         .eq('id', id)
 
-    if (error) return { error: 'Failed to delete comment' }
+    if (error) {
+        console.error("Delete Comment Error:", error)
+        return { error: 'Failed to delete comment', success: false, message: '' }
+    }
 
     if (leadId) revalidatePath(`/dashboard/leads/${leadId}`)
     revalidatePath('/dashboard/comments')
@@ -245,7 +274,7 @@ export async function getInsights() {
         .from('leads')
         .select('*', { count: 'exact', head: true })
         .eq('is_deleted', false)
-        .gte('created_time', new Date().setHours(0, 0, 0, 0)) // Today
+        .gte('created_time', new Date(new Date().setHours(0, 0, 0, 0)).toISOString()) // Today
 
     // Quick status breakdown
     // Note: Supabase doesn't support complex GROUP BY easily with simple client usage without RPC usually,

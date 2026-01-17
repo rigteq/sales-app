@@ -9,8 +9,8 @@ export async function InsightsView() {
     const stats = await getInsights()
 
     return (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="flex gap-4 overflow-x-auto pb-4 md:grid md:grid-cols-2 lg:grid-cols-4 md:pb-0 scrollbar-hide">
+            <div className="min-w-[240px] rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
                 <div className="flex items-center justify-between space-y-0.5">
                     <h3 className="text-sm font-medium tracking-tight text-zinc-500 dark:text-zinc-400">Total Leads</h3>
                     <Users className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
@@ -23,7 +23,7 @@ export async function InsightsView() {
                 </div>
             </div>
 
-            <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+            <div className="min-w-[240px] rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
                 <div className="flex items-center justify-between space-y-0.5">
                     <h3 className="text-sm font-medium tracking-tight text-zinc-500 dark:text-zinc-400">New Today</h3>
                     <Activity className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
@@ -36,7 +36,7 @@ export async function InsightsView() {
                 </div>
             </div>
 
-            <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+            <div className="min-w-[240px] rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
                 <div className="flex items-center justify-between space-y-0.5">
                     <h3 className="text-sm font-medium tracking-tight text-zinc-500 dark:text-zinc-400">In Conversation</h3>
                     <MessageSquare className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
@@ -49,7 +49,7 @@ export async function InsightsView() {
                 </div>
             </div>
 
-            <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+            <div className="min-w-[240px] rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
                 <div className="flex items-center justify-between space-y-0.5">
                     <h3 className="text-sm font-medium tracking-tight text-zinc-500 dark:text-zinc-400">Converted (PO)</h3>
                     <CheckCircle2 className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />

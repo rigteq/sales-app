@@ -87,8 +87,14 @@ export function LeadView({ lead }: { lead: Lead }) {
             <div className="grid gap-6 p-6 sm:grid-cols-2 lg:grid-cols-3">
                 <div className="space-y-1">
                     <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">Phone</p>
-                    <p className="font-medium text-zinc-900 dark:text-zinc-50">{lead.phone}</p>
+                    <p className="font-medium text-zinc-900 dark:text-zinc-50">{lead.phone || '-'}</p>
                 </div>
+                {lead.secondary_phone && (
+                    <div className="space-y-1">
+                        <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">Secondary Phone</p>
+                        <p className="font-medium text-zinc-900 dark:text-zinc-50">{lead.secondary_phone}</p>
+                    </div>
+                )}
                 <div className="space-y-1">
                     <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">Location</p>
                     <div className="flex items-center gap-2">

@@ -64,31 +64,42 @@ export function AddLeadForm() {
                     {/* Phone */}
                     <div className="space-y-2">
                         <label htmlFor="phone" className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                            Phone Number *
+                            Phone Number
                         </label>
                         <input
                             id="phone"
                             name="phone"
                             type="tel"
-                            required
                             pattern="[0-9]{10}"
-                            maxLength={10}
                             placeholder="1234567890"
                             className="flex h-10 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:border-zinc-800 dark:bg-zinc-950 dark:placeholder:text-zinc-400 dark:focus-visible:ring-zinc-300"
                         />
                         <p className="text-xs text-zinc-500">Must be exactly 10 digits.</p>
                     </div>
 
+                    {/* Secondary Phone */}
+                    <div className="space-y-2">
+                        <label htmlFor="secondaryPhone" className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                            Secondary Phone
+                        </label>
+                        <input
+                            id="secondaryPhone"
+                            name="secondaryPhone"
+                            type="tel"
+                            placeholder="Landline or other"
+                            className="flex h-10 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:border-zinc-800 dark:bg-zinc-950 dark:placeholder:text-zinc-400 dark:focus-visible:ring-zinc-300"
+                        />
+                    </div>
+
                     {/* Email */}
                     <div className="space-y-2">
                         <label htmlFor="email" className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                            Email *
+                            Email
                         </label>
                         <input
                             id="email"
                             name="email"
                             type="email"
-                            required
                             placeholder="john@example.com"
                             className="flex h-10 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:border-zinc-800 dark:bg-zinc-950 dark:placeholder:text-zinc-400 dark:focus-visible:ring-zinc-300"
                         />

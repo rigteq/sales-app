@@ -41,6 +41,11 @@ export function EditLeadForm({ lead, onCancel }: { lead: Lead, onCancel: () => v
             onCancel() // Optimistic close, or handle properly with effect
         }} className="space-y-6 rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
             <input type="hidden" name="id" value={lead.id} />
+            {state?.error && (
+                <div className="rounded-md bg-red-50 p-3 text-sm text-red-600 dark:bg-red-900/10 dark:text-red-400">
+                    <p>{state.error}</p>
+                </div>
+            )}
 
             <div className="flex items-center justify-between">
                 <h3 className="text-lg font-medium">Edit Lead</h3>
@@ -58,6 +63,41 @@ export function EditLeadForm({ lead, onCancel }: { lead: Lead, onCancel: () => v
                         type="text"
                         required
                         defaultValue={lead.lead_name}
+                        className="flex h-10 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:border-zinc-800 dark:bg-zinc-950"
+                    />
+                </div>
+
+                <div className="space-y-2">
+                    <label htmlFor="phone" className="text-sm font-medium">Phone</label>
+                    <input
+                        id="phone"
+                        name="phone"
+                        type="tel"
+                        pattern="[0-9]{10}"
+                        maxLength={10}
+                        defaultValue={lead.phone || ''}
+                        className="flex h-10 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:border-zinc-800 dark:bg-zinc-950"
+                    />
+                </div>
+
+                <div className="space-y-2">
+                    <label htmlFor="email" className="text-sm font-medium">Email</label>
+                    <input
+                        id="email"
+                        name="email"
+                        type="email"
+                        defaultValue={lead.email || ''}
+                        className="flex h-10 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:border-zinc-800 dark:bg-zinc-950"
+                    />
+                </div>
+
+                <div className="space-y-2">
+                    <label htmlFor="secondaryPhone" className="text-sm font-medium">Secondary Phone</label>
+                    <input
+                        id="secondaryPhone"
+                        name="secondaryPhone"
+                        type="tel"
+                        defaultValue={lead.secondary_phone || ''}
                         className="flex h-10 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:border-zinc-800 dark:bg-zinc-950"
                     />
                 </div>
