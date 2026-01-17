@@ -232,3 +232,43 @@ export async function deleteComment(id: number, leadId?: number) {
     revalidatePath('/dashboard/comments')
     return { success: true }
 }
+
+export async function getInsights() {
+    const supabase = await createClient()
+
+    const { count: totalLeads } = await supabase
+        .from('leads')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_deleted', false)
+
+    const { count: newLeads } = await supabase
+        .from('leads')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_deleted', false)
+        .gte('created_time', new Date().setHours(0, 0, 0, 0)) // Today
+
+    // Quick status breakdown
+    // Note: Supabase doesn't support complex GROUP BY easily with simple client usage without RPC usually,
+    // but we can do a few separate counts or fetch all status column (efficient if <10k rows usually, else RPC).
+    // For now, let's fetch purely status column to aggregate manually or just separate counts for key ones.
+    // Let's do a few simple queries for "New", "In Conversation", "Converted".
+
+    const { count: inConversation } = await supabase
+        .from('leads')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'In Conversation')
+        .eq('is_deleted', false)
+
+    const { count: converted } = await supabase // Assuming 'PO' is converted/success
+        .from('leads')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'PO')
+        .eq('is_deleted', false)
+
+    return {
+        totalLeads: totalLeads || 0,
+        newLeads: newLeads || 0,
+        inConversation: inConversation || 0,
+        converted: converted || 0
+    }
+}

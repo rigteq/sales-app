@@ -31,7 +31,17 @@ export async function updateSession(request: NextRequest) {
     )
 
     // refresh session if expired
-    await supabase.auth.getUser()
+    const {
+        data: { user },
+    } = await supabase.auth.getUser()
+
+    if (request.nextUrl.pathname.startsWith('/dashboard') && !user) {
+        return NextResponse.redirect(new URL('/', request.url))
+    }
+
+    if (request.nextUrl.pathname === '/' && user) {
+        return NextResponse.redirect(new URL('/dashboard', request.url))
+    }
 
     return supabaseResponse
 }

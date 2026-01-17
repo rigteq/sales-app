@@ -3,6 +3,18 @@ import { Lead } from '@/types'
 import Link from 'next/link'
 import { Eye } from 'lucide-react'
 
+// Helper to determine status color
+const getStatusColor = (status: string) => {
+    switch (status) {
+        case 'PO': return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+        case 'DND':
+        case 'DNP':
+        case 'Not Interested': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+        case 'New': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+        default: return 'bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200'
+    }
+}
+
 export function LeadsTable({ leads }: { leads: Lead[] }) {
     return (
         <div className="mt-6 flow-root">
@@ -21,7 +33,7 @@ export function LeadsTable({ leads }: { leads: Lead[] }) {
                                         </div>
                                         <p className="text-sm text-zinc-500 dark:text-zinc-400">{lead.email}</p>
                                     </div>
-                                    <div className="rounded-full px-2.5 py-0.5 text-xs font-medium bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200 shrink-0">
+                                    <div className={`rounded-full px-2.5 py-0.5 text-xs font-medium shrink-0 ${getStatusColor(lead.status || '')}`}>
                                         {lead.status}
                                     </div>
                                 </div>
@@ -84,7 +96,7 @@ export function LeadsTable({ leads }: { leads: Lead[] }) {
                                         </div>
                                     </td>
                                     <td className="whitespace-nowrap px-3 py-3">
-                                        <span className="inline-flex items-center rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200">
+                                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(lead.status || '')}`}>
                                             {lead.status}
                                         </span>
                                     </td>

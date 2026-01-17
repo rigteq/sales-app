@@ -26,11 +26,13 @@ export function Pagination({ totalPages }: { totalPages: number }) {
                     isDisabled={currentPage <= 1}
                 />
 
-                <div className="flex -space-x-px">
-                    {/* Simple pagination for now - can be expanded to show page numbers */}
+                <div className="flex flex-col items-center gap-1">
                     <span className="px-4 py-2 text-sm text-zinc-500 dark:text-zinc-400">
-                        Page {currentPage} of {totalPages}
+                        Page {currentPage} of {totalPages === 0 ? 1 : totalPages}
                     </span>
+                    {totalPages === 0 && (
+                        <span className="text-xs text-zinc-400 dark:text-zinc-500">No records available</span>
+                    )}
                 </div>
 
                 <PaginationArrow

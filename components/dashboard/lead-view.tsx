@@ -8,6 +8,17 @@ import { Phone, MessageCircle, Pencil, Trash2, MapPin, Calendar, User } from 'lu
 import { deleteLead } from '@/app/dashboard/actions'
 import { useRouter } from 'next/navigation'
 
+const getStatusColor = (status: string) => {
+    switch (status) {
+        case 'PO': return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+        case 'DND':
+        case 'DNP':
+        case 'Not Interested': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+        case 'New': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+        default: return 'bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200'
+    }
+}
+
 export function LeadView({ lead }: { lead: Lead }) {
     const [isEditing, setIsEditing] = useState(false)
     const router = useRouter()
@@ -33,7 +44,7 @@ export function LeadView({ lead }: { lead: Lead }) {
                 <div className="space-y-1">
                     <div className="flex items-center gap-3">
                         <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">{lead.lead_name}</h1>
-                        <span className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200">
+                        <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(lead.status || '')}`}>
                             {lead.status}
                         </span>
                     </div>

@@ -1,5 +1,6 @@
 
 import { AddLeadForm } from '@/components/dashboard/add-lead-form'
+import { InsightsView } from '@/components/dashboard/insights-view'
 
 export default function Dashboard() {
     return (
@@ -11,6 +12,10 @@ export default function Dashboard() {
                 <p className="text-zinc-500 dark:text-zinc-400">
                     Manage your sales pipeline and leads effectively.
                 </p>
+            </div>
+
+            <div className="w-full">
+                <InsightsView />
             </div>
 
             <div className="w-full flex justify-center">

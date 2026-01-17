@@ -45,6 +45,12 @@ export function Header() {
                         >
                             All Comments
                         </Link>
+                        <Link
+                            href="/dashboard/insights"
+                            className="text-zinc-500 hover:text-zinc-900 transition-colors dark:text-zinc-400 dark:hover:text-zinc-50"
+                        >
+                            Insights
+                        </Link>
                     </nav>
                 </div>
 
@@ -77,6 +83,11 @@ export function Header() {
                                     <button
                                         type="submit"
                                         className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/50"
+                                        onClick={(e) => {
+                                            if (!confirm('Are you sure you want to logout?')) {
+                                                e.preventDefault()
+                                            }
+                                        }}
                                     >
                                         <LogOut className="h-4 w-4" />
                                         Logout
@@ -104,6 +115,13 @@ export function Header() {
                         className="block text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
                     >
                         All Comments
+                    </Link>
+                    <Link
+                        href="/dashboard/insights"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="block text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
+                    >
+                        Insights
                     </Link>
                 </div>
             )}
