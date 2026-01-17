@@ -12,32 +12,36 @@ export function LeadsTable({ leads }: { leads: Lead[] }) {
                         {leads?.map((lead) => (
                             <div
                                 key={lead.id}
-                                className="mb-2 w-full rounded-md bg-white p-4 border-b border-zinc-100 last:border-0 dark:bg-zinc-900 dark:border-zinc-800"
+                                className="mb-4 w-full rounded-xl bg-white p-5 border border-zinc-200 shadow-sm dark:bg-zinc-900 dark:border-zinc-800"
                             >
-                                <div className="flex items-center justify-between border-b border-zinc-100 pb-4 dark:border-zinc-800">
+                                <div className="flex items-start justify-between border-b border-zinc-100 pb-4 mb-4 dark:border-zinc-800">
                                     <div>
-                                        <div className="mb-2 flex items-center">
-                                            <p className="text-lg font-medium dark:text-zinc-100">{lead.lead_name}</p>
+                                        <div className="mb-1 flex items-center">
+                                            <p className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">{lead.lead_name}</p>
                                         </div>
                                         <p className="text-sm text-zinc-500 dark:text-zinc-400">{lead.email}</p>
                                     </div>
-                                    <div className="rounded-full px-2 py-1 text-xs font-medium bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
+                                    <div className="rounded-full px-2.5 py-0.5 text-xs font-medium bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200 shrink-0">
                                         {lead.status}
                                     </div>
                                 </div>
-                                <div className="flex w-full items-center justify-between pt-4">
-                                    <div>
-                                        <p className="text-sm font-medium dark:text-zinc-100">{lead.phone}</p>
-                                        <p className="text-xs text-zinc-500 dark:text-zinc-400">{new Date(lead.created_time).toLocaleDateString()}</p>
+                                <div className="space-y-3">
+                                    <div className="flex justify-between items-center text-sm">
+                                        <span className="text-zinc-500 dark:text-zinc-400">Phone</span>
+                                        <span className="font-medium text-zinc-900 dark:text-zinc-100">{lead.phone}</span>
                                     </div>
-                                    <div className="flex justify-end gap-2">
-                                        <Link
-                                            href={`/dashboard/leads/${lead.id}`}
-                                            className="rounded-md border border-zinc-200 p-2 hover:bg-zinc-100 dark:border-zinc-800 dark:hover:bg-zinc-800"
-                                        >
-                                            <Eye className="w-5" />
-                                        </Link>
+                                    <div className="flex justify-between items-center text-sm">
+                                        <span className="text-zinc-500 dark:text-zinc-400">Created</span>
+                                        <span className="text-zinc-900 dark:text-zinc-100">{new Date(lead.created_time).toLocaleDateString()}</span>
                                     </div>
+                                </div>
+                                <div className="mt-4 pt-4 border-t border-zinc-100 dark:border-zinc-800 flex justify-end">
+                                    <Link
+                                        href={`/dashboard/leads/${lead.id}`}
+                                        className="inline-flex items-center justify-center rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white shadow hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200 w-full sm:w-auto"
+                                    >
+                                        View Details
+                                    </Link>
                                 </div>
                             </div>
                         ))}

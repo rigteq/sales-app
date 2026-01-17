@@ -39,7 +39,7 @@ export function LeadView({ lead }: { lead: Lead }) {
                     </div>
                     <p className="text-zinc-500 dark:text-zinc-400">{lead.email}</p>
                 </div>
-                <div className="mt-4 flex flex-wrap gap-2 md:mt-0">
+                <div className="mt-4 flex flex-wrap gap-3 md:mt-0">
                     <a
                         href={`tel:${lead.phone}`}
                         className="inline-flex items-center justify-center gap-2 rounded-md border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-900 transition-colors hover:bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-50 dark:hover:bg-zinc-800"
