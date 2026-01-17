@@ -189,19 +189,34 @@ export async function addComment(prevState: any, formData: FormData) {
 
     const { data: { user } } = await supabase.auth.getUser()
 
-    const { error } = await supabase
+    // 1. Add Comment
+    const { error: commentError } = await supabase
         .from('comments')
         .insert({
             lead_id: leadId,
             comment_text: commentText,
-            status: status,
+            status: status, // Log the status change in the comment record too
             created_by_email_id: user?.email
         })
 
-    if (error) return { error: 'Failed to add comment' }
+    if (commentError) return { error: 'Failed to add comment' }
+
+    // 2. Update Lead Status (if status is provided)
+    if (status) {
+        const { error: leadError } = await supabase
+            .from('leads')
+            .update({
+                status: status,
+                last_edited_time: new Date().toISOString()
+            })
+            .eq('id', leadId)
+
+        if (leadError) console.error('Failed to update lead status:', leadError)
+    }
 
     revalidatePath(`/dashboard/leads/${leadId}`)
-    return { success: true, message: 'Comment added' }
+    revalidatePath('/dashboard/leads') // Update list view too
+    return { success: true, message: 'Comment added and status updated' }
 }
 
 export async function deleteComment(id: number, leadId?: number) {

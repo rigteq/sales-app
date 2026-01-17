@@ -7,13 +7,19 @@ import { useActionState } from 'react'
 import { Loader2, Send, Trash2 } from 'lucide-react'
 import { useRef } from 'react'
 
-export function LeadComments({ leadId, comments }: { leadId: number, comments: Comment[] }) {
+export function LeadComments({ leadId, comments, currentStatus }: { leadId: number, comments: Comment[], currentStatus: string }) {
     const [state, formAction, isPending] = useActionState(addComment, null)
     const formRef = useRef<HTMLFormElement>(null)
 
     // Reset form on success
     if (state?.success && formRef.current) {
         formRef.current.reset()
+        // We also need to retain the selected status or allow it to be whatever it just changed to. 
+        // Ideally the parent component re-renders and passes the new status, so the defaultValue updates.
+        // But standard form reset might clear it. defaultValue only works on initial mount.
+        // Let's rely on native behavior or key-change. 
+        // Actually, since it's server rendered, the page refreshes and `currentStatus` updates. 
+        // But key={currentStatus} on select might force re-render.
     }
 
     const handleDelete = async (id: number) => {
@@ -46,9 +52,10 @@ export function LeadComments({ leadId, comments }: { leadId: number, comments: C
                         <div className="flex flex-col gap-2 min-w-[150px]">
                             <select
                                 name="status"
+                                key={currentStatus} // Force re-render when status changes
+                                defaultValue={currentStatus}
                                 className="w-full rounded-md border border-zinc-200 bg-white p-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:border-zinc-800 dark:bg-zinc-950"
                             >
-                                <option value="">Update Status?</option>
                                 {statusOptions.map(s => <option key={s} value={s}>{s}</option>)}
                             </select>
                             <button

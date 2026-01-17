@@ -35,7 +35,7 @@ export default async function LeadDetailsPage({
 
             <LeadView lead={lead} />
 
-            <LeadComments leadId={leadId} comments={comments} />
+            <LeadComments leadId={leadId} comments={comments} currentStatus={lead.status} />
         </div>
     )
 }

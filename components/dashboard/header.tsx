@@ -8,17 +8,30 @@ import { User, LogOut, ChevronDown } from 'lucide-react'
 
 export function Header() {
     const [isProfileOpen, setIsProfileOpen] = useState(false)
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
     return (
         <header className="sticky top-0 z-40 w-full border-b border-zinc-200 bg-white/75 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/75">
             <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
-                <div className="flex items-center gap-8">
+                <div className="flex items-center gap-4 md:gap-8">
+                    {/* Mobile Menu Button */}
+                    <button
+                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                        className="md:hidden p-2 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
+                    >
+                        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={isMobileMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
+                        </svg>
+                    </button>
+
                     <Link href="/dashboard" className="flex items-center gap-2 font-bold text-xl text-zinc-900 dark:text-zinc-50">
                         <div className="h-8 w-8 rounded-lg bg-zinc-900 flex items-center justify-center text-white dark:bg-zinc-50 dark:text-zinc-900">
                             R
                         </div>
-                        <span>Rigteq Sales</span>
+                        <span className="hidden sm:inline-block">Rigteq Sales</span>
                     </Link>
+
+                    {/* Desktop Nav */}
                     <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
                         <Link
                             href="/dashboard/leads"
@@ -74,6 +87,26 @@ export function Header() {
                     )}
                 </div>
             </div>
+
+            {/* Mobile Nav Menu */}
+            {isMobileMenuOpen && (
+                <div className="md:hidden border-t border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-4 py-4 space-y-4">
+                    <Link
+                        href="/dashboard/leads"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="block text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
+                    >
+                        All Leads
+                    </Link>
+                    <Link
+                        href="/dashboard/comments"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="block text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
+                    >
+                        All Comments
+                    </Link>
+                </div>
+            )}
         </header>
     )
 }
