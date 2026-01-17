@@ -19,7 +19,13 @@ const statusOptions = [
 ]
 
 export function EditLeadForm({ lead, onCancel }: { lead: Lead, onCancel: () => void }) {
-    const [state, formAction, isPending] = useActionState(updateLead, null)
+    const initialState = {
+        error: undefined,
+        success: false,
+        message: ''
+    }
+    // @ts-ignore - TS strict union check vs async return type
+    const [state, formAction, isPending] = useActionState(updateLead, initialState)
 
     if (state?.success) {
         // Could auto-close here, but parent handling is safer via effect if needed.

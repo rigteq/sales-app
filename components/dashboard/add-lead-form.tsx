@@ -7,7 +7,7 @@ import { Loader2, Plus, CheckCircle2, AlertCircle } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 
 const initialState = {
-    error: null,
+    error: undefined as string | undefined, // Explicit type to match potential return
     success: false,
     message: ''
 }

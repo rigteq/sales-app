@@ -8,7 +8,13 @@ import { Loader2, Send, Trash2 } from 'lucide-react'
 import { useRef } from 'react'
 
 export function LeadComments({ leadId, comments, currentStatus }: { leadId: number, comments: Comment[], currentStatus: string }) {
-    const [state, formAction, isPending] = useActionState(addComment, null)
+    const initialState = {
+        error: undefined,
+        success: false,
+        message: ''
+    }
+    // @ts-ignore
+    const [state, formAction, isPending] = useActionState(addComment, initialState)
     const formRef = useRef<HTMLFormElement>(null)
 
     // Reset form on success

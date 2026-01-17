@@ -17,17 +17,17 @@ export async function addLead(prevState: any, formData: FormData) {
 
     // Validation
     if (!leadName || !phone || !email) {
-        return { error: 'Name, Phone, and Email are required.' }
+        return { error: 'Name, Phone, and Email are required.', success: false, message: '' }
     }
 
     if (phone.length !== 10 || !/^\d+$/.test(phone)) {
-        return { error: 'Phone number must be exactly 10 digits.' }
+        return { error: 'Phone number must be exactly 10 digits.', success: false, message: '' }
     }
 
     // Get current user to set as creator
     const { data: { user } } = await supabase.auth.getUser()
     if (!user || !user.email) {
-        return { error: 'You must be logged in to add a lead.' }
+        return { error: 'You must be logged in to add a lead.', success: false, message: '' }
     }
 
     const { error } = await supabase
@@ -45,14 +45,14 @@ export async function addLead(prevState: any, formData: FormData) {
     if (error) {
         console.error('Error adding lead:', error)
         if (error.code === '23505') { // Unique violation
-            if (error.message.includes('phone')) return { error: 'Phone number already exists.' }
-            if (error.message.includes('email')) return { error: 'Email already exists.' }
+            if (error.message.includes('phone')) return { error: 'Phone number already exists.', success: false, message: '' }
+            if (error.message.includes('email')) return { error: 'Email already exists.', success: false, message: '' }
         }
-        return { error: 'Failed to add lead. Please try again.' }
+        return { error: 'Failed to add lead. Please try again.', success: false, message: '' }
     }
 
     revalidatePath('/dashboard/leads')
-    return { success: true, message: 'Lead added successfully!' }
+    return { success: true, message: 'Lead added successfully!', error: undefined }
 }
 
 export async function getLeads(page = 1, search = '') {
@@ -114,12 +114,12 @@ export async function updateLead(prevState: any, formData: FormData) {
         .eq('id', id)
 
     if (error) {
-        return { error: 'Failed to update lead' }
+        return { error: 'Failed to update lead', success: false, message: '' }
     }
 
     revalidatePath(`/dashboard/leads/${id}`)
     revalidatePath('/dashboard/leads')
-    return { success: true, message: 'Lead updated successfully' }
+    return { success: true, message: 'Lead updated successfully', error: undefined }
 }
 
 export async function deleteLead(id: number) {
@@ -185,7 +185,7 @@ export async function addComment(prevState: any, formData: FormData) {
     const commentText = formData.get('commentText')
     const status = formData.get('status')
 
-    if (!commentText) return { error: 'Comment text is required' }
+    if (!commentText) return { error: 'Comment text is required', success: false, message: '' }
 
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -199,7 +199,7 @@ export async function addComment(prevState: any, formData: FormData) {
             created_by_email_id: user?.email
         })
 
-    if (commentError) return { error: 'Failed to add comment' }
+    if (commentError) return { error: 'Failed to add comment', success: false, message: '' }
 
     // 2. Update Lead Status (if status is provided)
     if (status) {
@@ -216,7 +216,7 @@ export async function addComment(prevState: any, formData: FormData) {
 
     revalidatePath(`/dashboard/leads/${leadId}`)
     revalidatePath('/dashboard/leads') // Update list view too
-    return { success: true, message: 'Comment added and status updated' }
+    return { success: true, message: 'Comment added and status updated', error: undefined }
 }
 
 export async function deleteComment(id: number, leadId?: number) {
