@@ -9,7 +9,9 @@ import { useState } from 'react'
 
 const statusOptions = [
     'New',
+    'Contacted',
     'In Conversation',
+    'Scheduled',
     'DNP',
     'DND',
     'Not Interested',

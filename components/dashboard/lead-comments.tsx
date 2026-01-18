@@ -34,7 +34,7 @@ export function LeadComments({ leadId, comments, currentStatus }: { leadId: numb
         }
     }
 
-    const statusOptions = ['New', 'In Conversation', 'DNP', 'DND', 'Not Interested', 'Out of reach', 'Wrong details', 'PO']
+    const statusOptions = ['New', 'Contacted', 'In Conversation', 'Scheduled', 'DNP', 'DND', 'Not Interested', 'Out of reach', 'Wrong details', 'PO']
 
     return (
         <div className="mt-8 space-y-6">

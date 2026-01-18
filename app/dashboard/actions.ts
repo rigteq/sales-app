@@ -75,7 +75,7 @@ export async function getLeads(page = 1, search = '') {
         .range(from, to)
 
     if (search) {
-        query = query.or(`lead_name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`)
+        query = query.or(`lead_name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%,status.ilike.%${search}%`)
     }
 
     const { data, count, error } = await query

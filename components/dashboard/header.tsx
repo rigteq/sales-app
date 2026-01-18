@@ -6,9 +6,12 @@ import { useState } from 'react'
 import { signOut } from '@/app/auth/actions'
 import { User, LogOut, ChevronDown } from 'lucide-react'
 
-export function Header() {
+export function Header({ userName }: { userName?: string }) {
     const [isProfileOpen, setIsProfileOpen] = useState(false)
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+
+    // Fallback if not provided, though layout should provide it.
+    const displayName = userName || 'Profile'
 
     return (
         <header className="sticky top-0 z-40 w-full border-b border-zinc-200 bg-white/75 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/75">
@@ -60,7 +63,7 @@ export function Header() {
                         className="flex items-center gap-2 rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-sm font-medium text-zinc-900 hover:bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-50 dark:hover:bg-zinc-800"
                     >
                         <User className="h-4 w-4" />
-                        <span className="hidden sm:inline-block">Profile</span>
+                        <span className="hidden sm:inline-block max-w-[150px] truncate">{displayName}</span>
                         <ChevronDown className="h-3 w-3 text-zinc-500" />
                     </button>
 

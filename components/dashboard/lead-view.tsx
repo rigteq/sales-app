@@ -19,7 +19,7 @@ const getStatusColor = (status: string) => {
     }
 }
 
-export function LeadView({ lead }: { lead: Lead }) {
+export function LeadView({ lead, userName }: { lead: Lead, userName?: string }) {
     const [isEditing, setIsEditing] = useState(false)
     const router = useRouter()
 
@@ -59,7 +59,9 @@ export function LeadView({ lead }: { lead: Lead }) {
                         Call
                     </a>
                     <a
-                        href={`https://wa.me/${lead.phone}`}
+                        href={`https://wa.me/${lead.phone}?text=${encodeURIComponent(
+                            `Hello ${lead.lead_name}, ${userName || 'I am'} here from Rigteq Solutions. \n\nIs your business ready for a digital upgrade? We are offering a Special Growth Package this week:\n\n 50% Discount on Web & Software Dev.  1 Year FREE Maintenance.  Free Demo customized for your business.\n\nGet your professional website started at just ₹2,999 and manage your operations with ease.\n\nInterested in seeing a free demo of what we can build for you?`
+                        )}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center justify-center gap-2 rounded-md bg-[#25D366] px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"

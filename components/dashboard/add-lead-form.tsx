@@ -14,7 +14,9 @@ const initialState = {
 
 const statusOptions = [
     'New',
+    'Contacted',
     'In Conversation',
+    'Scheduled',
     'DNP',
     'DND',
     'Not Interested',
@@ -34,7 +36,7 @@ export function AddLeadForm() {
     }, [state?.success])
 
     return (
-        <div className="w-full max-w-2xl rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+        <div className="w-full rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
             <div className="border-b border-zinc-200 p-6 dark:border-zinc-800">
                 <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
                     Add New Lead

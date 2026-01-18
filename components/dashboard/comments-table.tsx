@@ -1,27 +1,22 @@
-
 'use client'
 
 import { Comment } from '@/types'
-import Link from 'next/link'
-import { Eye, Trash2 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+
+import { Trash2 } from 'lucide-react'
 import { deleteComment } from '@/app/dashboard/actions'
 
 export function CommentsTable({ comments }: { comments: (Comment & { leads: { lead_name: string } })[] }) {
-
-    const handleDelete = async (id: number) => {
-        if (confirm('Are you sure you want to delete this comment?')) {
-            await deleteComment(id)
-        }
-    }
+    const router = useRouter()
 
     return (
-        <div className="mt-6 flow-root">
+        <div className="mt-6 flow-root overflow-x-auto">
             <div className="inline-block min-w-full align-middle">
                 <div className="rounded-lg bg-white p-2 md:pt-0 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
                     <table className="min-w-full text-zinc-900 md:table">
                         <thead className="rounded-lg text-left text-sm font-normal">
                             <tr>
-                                <th scope="col" className="px-4 py-5 font-medium sm:pl-6 dark:text-zinc-200">
+                                <th scope="col" className="px-4 py-3 font-medium sm:pl-6 dark:text-zinc-200">
                                     Lead
                                 </th>
                                 <th scope="col" className="px-3 py-5 font-medium dark:text-zinc-200">
@@ -36,8 +31,8 @@ export function CommentsTable({ comments }: { comments: (Comment & { leads: { le
                                 <th scope="col" className="px-3 py-5 font-medium dark:text-zinc-200">
                                     Time
                                 </th>
-                                <th scope="col" className="relative py-3 pl-6 pr-3">
-                                    <span className="sr-only">Actions</span>
+                                <th scope="col" className="px-3 py-3 font-medium dark:text-zinc-200">
+                                    Actions
                                 </th>
                             </tr>
                         </thead>
@@ -45,7 +40,11 @@ export function CommentsTable({ comments }: { comments: (Comment & { leads: { le
                             {comments?.map((comment) => (
                                 <tr
                                     key={comment.id}
-                                    className="w-full border-b border-zinc-100 py-3 text-sm last-of-type:border-none hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50"
+                                    onClick={(e) => {
+                                        // Prevent navigation if clicking on action buttons (though row click is handled, we might need to stop propagation on buttons)
+                                        router.push(`/dashboard/leads/${comment.lead_id}`)
+                                    }}
+                                    className="w-full border-b border-zinc-100 py-3 text-sm last-of-type:border-none hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50 cursor-pointer active:scale-[0.99] transition-all"
                                 >
                                     <td className="whitespace-nowrap py-3 pl-6 pr-3 font-medium text-zinc-900 dark:text-zinc-100">
                                         <div className="flex flex-col">
@@ -69,23 +68,18 @@ export function CommentsTable({ comments }: { comments: (Comment & { leads: { le
                                     <td className="whitespace-nowrap px-3 py-3 text-zinc-500 dark:text-zinc-400 text-xs">
                                         {new Date(comment.created_time).toLocaleString()}
                                     </td>
-                                    <td className="whitespace-nowrap py-3 pl-6 pr-3">
-                                        <div className="flex justify-end gap-3">
-                                            <Link
-                                                href={`/dashboard/leads/${comment.lead_id}`}
-                                                className="rounded-md border border-zinc-200 p-2 hover:bg-zinc-100 dark:border-zinc-800 dark:hover:bg-zinc-800 text-zinc-500 dark:text-zinc-400"
-                                                title="View Lead"
-                                            >
-                                                <Eye className="w-4" />
-                                            </Link>
-                                            <button
-                                                onClick={() => handleDelete(comment.id)}
-                                                className="rounded-md border border-zinc-200 p-2 hover:bg-red-50 text-red-500 hover:text-red-600 dark:border-zinc-800 dark:hover:bg-red-900/20"
-                                                title="Delete Comment"
-                                            >
-                                                <Trash2 className="w-4" />
-                                            </button>
-                                        </div>
+                                    <td className="whitespace-nowrap px-3 py-3 text-zinc-500 dark:text-zinc-400">
+                                        <button
+                                            onClick={async (e) => {
+                                                e.stopPropagation()
+                                                if (confirm('Are you sure you want to delete this comment?')) {
+                                                    await deleteComment(comment.id)
+                                                }
+                                            }}
+                                            className="p-2 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-500 transition-colors"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
                                     </td>
                                 </tr>
                             ))}

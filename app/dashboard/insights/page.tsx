@@ -1,5 +1,6 @@
 
 import { InsightsView } from '@/components/dashboard/insights-view'
+import { InsightsCharts } from '@/components/dashboard/insights-charts'
 
 export default function InsightsPage() {
     return (
@@ -11,12 +12,7 @@ export default function InsightsPage() {
 
             <InsightsView />
 
-            <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
-                <div className="flex flex-col items-center justify-center py-12 text-center text-zinc-500 dark:text-zinc-400">
-                    <p className="text-lg font-medium">Coming Soon</p>
-                    <p className="text-sm">Deep dive charts and granular reports are under development.</p>
-                </div>
-            </div>
+            <InsightsCharts />
         </div>
     )
 }
