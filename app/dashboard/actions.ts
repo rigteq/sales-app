@@ -75,7 +75,11 @@ export async function getLeads(page = 1, search = '') {
         .range(from, to)
 
     if (search) {
-        query = query.or(`lead_name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%,status.ilike.%${search}%`)
+        let orQuery = `lead_name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%,status.ilike.%${search}%`
+        if (!isNaN(Number(search))) {
+            orQuery += `,id.eq.${search}`
+        }
+        query = query.or(orQuery)
     }
 
     const { data, count, error } = await query
@@ -179,7 +183,12 @@ export async function getComments(page = 1, search = '') {
         .range(from, to)
 
     if (search) {
-        query = query.ilike('comment_text', `%${search}%`)
+        query = query.or(`comment_text.ilike.%${search}%,created_by_email_id.ilike.%${search}%`)
+
+        // Check if search is a number for ID search
+        if (!isNaN(Number(search))) {
+            query = query.or(`lead_id.eq.${search}`)
+        }
     }
 
     const { data, count, error } = await query
@@ -274,7 +283,7 @@ export async function getInsights() {
         .from('leads')
         .select('*', { count: 'exact', head: true })
         .eq('is_deleted', false)
-        .gte('created_time', new Date(new Date().setHours(0, 0, 0, 0)).toISOString()) // Today
+        .gte('created_time', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()) // Last 24 hours
 
     // Quick status breakdown
     // Note: Supabase doesn't support complex GROUP BY easily with simple client usage without RPC usually,
@@ -300,4 +309,42 @@ export async function getInsights() {
         inConversation: inConversation || 0,
         converted: converted || 0
     }
+}
+
+export async function updateProfile(formData: FormData) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+        return { error: 'Not authenticated', success: false }
+    }
+
+    const name = formData.get('name') as string
+    const phone = formData.get('phone') as string
+    const address = formData.get('address') as string
+
+    // Check if profile exists
+    const { data: existingProfile } = await supabase.from('profiles').select('id').eq('id', user.id).single()
+
+    let error;
+    if (existingProfile) {
+        const { error: updateError } = await supabase
+            .from('profiles')
+            .update({ name, phone, address })
+            .eq('id', user.id)
+        error = updateError
+    } else {
+        const { error: insertError } = await supabase
+            .from('profiles')
+            .insert({ id: user.id, name, phone, address, email: user.email })
+        error = insertError
+    }
+
+    if (error) {
+        console.error('Profile update error:', error)
+        return { error: 'Failed to update profile', success: false }
+    }
+
+    revalidatePath('/dashboard/profile')
+    return { success: true }
 }
