@@ -20,12 +20,6 @@ export function LeadComments({ leadId, comments, currentStatus }: { leadId: numb
     // Reset form on success
     if (state?.success && formRef.current) {
         formRef.current.reset()
-        // We also need to retain the selected status or allow it to be whatever it just changed to. 
-        // Ideally the parent component re-renders and passes the new status, so the defaultValue updates.
-        // But standard form reset might clear it. defaultValue only works on initial mount.
-        // Let's rely on native behavior or key-change. 
-        // Actually, since it's server rendered, the page refreshes and `currentStatus` updates. 
-        // But key={currentStatus} on select might force re-render.
     }
 
     const handleDelete = async (id: number) => {
@@ -34,7 +28,34 @@ export function LeadComments({ leadId, comments, currentStatus }: { leadId: numb
         }
     }
 
-    const statusOptions = ['New', 'Contacted', 'In Conversation', 'Scheduled', 'DNP', 'DND', 'Not Interested', 'Out of reach', 'Wrong details', 'PO']
+    const statusOptions = [
+        'New', 'Contacted', 'In Conversation', 'Scheduled', 'DNP',
+        'Out of reach', 'Wrong details', 'PO'
+    ]
+
+    const statusTextMap: Record<string, string> = {
+        'New': 'New Lead',
+        'Contacted': 'Sent Whatsapp',
+        'DNP': 'Called Twice',
+        'In Conversation': 'Interested',
+        'Scheduled': 'Need to connect on: ',
+        'Out of reach': 'Unreachable',
+        'Wrong details': 'Incorrect phone number',
+        'PO': 'Recieved Payment'
+    }
+
+    const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const newStatus = e.target.value
+        // If there's a mapped text, update textarea. 
+        // We only overwrite if the textarea is empty or matches another default text?
+        // User said: "Old comment text if any get reset to new deault text" -> So always overwrite.
+        // Wait, "if any get reset" implies overwrite.
+        const defaultText = statusTextMap[newStatus]
+        if (defaultText && formRef.current) {
+            const textarea = formRef.current.querySelector('textarea')
+            if (textarea) textarea.value = defaultText
+        }
+    }
 
     return (
         <div className="mt-8 space-y-6">
@@ -58,8 +79,9 @@ export function LeadComments({ leadId, comments, currentStatus }: { leadId: numb
                         <div className="flex flex-col gap-2 min-w-[150px]">
                             <select
                                 name="status"
-                                key={currentStatus} // Force re-render when status changes
+                                key={currentStatus}
                                 defaultValue={currentStatus}
+                                onChange={handleStatusChange}
                                 className="w-full rounded-md border border-zinc-200 bg-white p-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:border-zinc-800 dark:bg-zinc-950"
                             >
                                 {statusOptions.map(s => <option key={s} value={s}>{s}</option>)}

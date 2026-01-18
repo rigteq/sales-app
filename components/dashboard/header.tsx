@@ -43,10 +43,22 @@ export function Header({ userName }: { userName?: string }) {
                             All Leads
                         </Link>
                         <Link
+                            href="/dashboard/my-leads"
+                            className="text-zinc-500 hover:text-zinc-900 transition-colors dark:text-zinc-400 dark:hover:text-zinc-50"
+                        >
+                            My Leads
+                        </Link>
+                        <Link
                             href="/dashboard/comments"
                             className="text-zinc-500 hover:text-zinc-900 transition-colors dark:text-zinc-400 dark:hover:text-zinc-50"
                         >
                             All Comments
+                        </Link>
+                        <Link
+                            href="/dashboard/my-comments"
+                            className="text-zinc-500 hover:text-zinc-900 transition-colors dark:text-zinc-400 dark:hover:text-zinc-50"
+                        >
+                            My Comments
                         </Link>
                         <Link
                             href="/dashboard/insights"
@@ -113,11 +125,25 @@ export function Header({ userName }: { userName?: string }) {
                         All Leads
                     </Link>
                     <Link
+                        href="/dashboard/my-leads"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="block text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
+                    >
+                        My Leads
+                    </Link>
+                    <Link
                         href="/dashboard/comments"
                         onClick={() => setIsMobileMenuOpen(false)}
                         className="block text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
                     >
                         All Comments
+                    </Link>
+                    <Link
+                        href="/dashboard/my-comments"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="block text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
+                    >
+                        My Comments
                     </Link>
                     <Link
                         href="/dashboard/insights"

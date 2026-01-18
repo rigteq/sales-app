@@ -6,21 +6,25 @@ import { getInsights } from '@/app/dashboard/actions'
 
 export function InsightsCharts() {
     const [stats, setStats] = useState({
-        totalLeads: 0,
-        newLeads: 0,
-        inConversation: 0,
-        converted: 0
+        metric1: 0,
+        metric2: 0,
+        metric3: 0,
+        metric4: 0
     })
 
     useEffect(() => {
-        getInsights().then(setStats)
+        getInsights('all_leads').then(setStats)
     }, [])
 
+    // Map generic metrics to specific chart needs
+    const totalLeads = stats.metric1
+    const inConversation = stats.metric3
+    const converted = stats.metric4
+
     // Calculate simple percentages for visualization
-    const total = stats.totalLeads || 1
-    const newPercent = Math.round((stats.newLeads / total) * 100) || 0
-    const conversationPercent = Math.round((stats.inConversation / total) * 100) || 0
-    const convertedPercent = Math.round((stats.converted / total) * 100) || 0
+    const total = totalLeads || 1
+    const conversationPercent = Math.round((inConversation / total) * 100) || 0
+    const convertedPercent = Math.round((converted / total) * 100) || 0
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -40,7 +44,7 @@ export function InsightsCharts() {
                     <div>
                         <div className="flex justify-between text-sm mb-1.5">
                             <span className="font-medium text-zinc-700 dark:text-zinc-300">Total Leads</span>
-                            <span className="text-zinc-900 dark:text-zinc-100 font-bold">{stats.totalLeads}</span>
+                            <span className="text-zinc-900 dark:text-zinc-100 font-bold">{totalLeads}</span>
                         </div>
                         <div className="w-full bg-zinc-100 rounded-full h-2.5 dark:bg-zinc-800">
                             <div className="h-full rounded-full bg-zinc-900 dark:bg-zinc-100 w-full opacity-20"></div>
@@ -50,7 +54,7 @@ export function InsightsCharts() {
                     <div>
                         <div className="flex justify-between text-sm mb-1.5">
                             <span className="font-medium text-blue-600 dark:text-blue-400">In Conversation</span>
-                            <span className="text-zinc-500">{conversationPercent}% ({stats.inConversation})</span>
+                            <span className="text-zinc-500">{conversationPercent}% ({inConversation})</span>
                         </div>
                         <div className="w-full bg-zinc-100 rounded-full h-2.5 dark:bg-zinc-800">
                             <div className="h-full rounded-full bg-blue-500 transition-all duration-1000" style={{ width: `${conversationPercent}%` }}></div>
@@ -60,7 +64,7 @@ export function InsightsCharts() {
                     <div>
                         <div className="flex justify-between text-sm mb-1.5">
                             <span className="font-medium text-green-600 dark:text-green-400">Converted</span>
-                            <span className="text-zinc-500">{convertedPercent}% ({stats.converted})</span>
+                            <span className="text-zinc-500">{convertedPercent}% ({converted})</span>
                         </div>
                         <div className="w-full bg-zinc-100 rounded-full h-2.5 dark:bg-zinc-800">
                             <div className="h-full rounded-full bg-green-500 transition-all duration-1000" style={{ width: `${convertedPercent}%` }}></div>
@@ -84,11 +88,11 @@ export function InsightsCharts() {
                 <div className="grid grid-cols-2 gap-4">
                     <div className="p-4 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800">
                         <p className="text-sm text-zinc-500 dark:text-zinc-400">Conversion Rate</p>
-                        <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mt-1">{stats.totalLeads > 0 ? ((stats.converted / stats.totalLeads) * 100).toFixed(1) : 0}%</p>
+                        <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mt-1">{totalLeads > 0 ? ((converted / totalLeads) * 100).toFixed(1) : 0}%</p>
                     </div>
                     <div className="p-4 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800">
                         <p className="text-sm text-zinc-500 dark:text-zinc-400">Active Rate</p>
-                        <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mt-1">{stats.totalLeads > 0 ? ((stats.inConversation / stats.totalLeads) * 100).toFixed(1) : 0}%</p>
+                        <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mt-1">{totalLeads > 0 ? ((inConversation / totalLeads) * 100).toFixed(1) : 0}%</p>
                     </div>
                     <div className="p-4 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800 col-span-2">
                         <div className="flex items-center gap-3">

@@ -61,9 +61,9 @@ export async function addLead(prevState: any, formData: FormData) {
     return { success: true, message: 'Lead added successfully!', error: undefined }
 }
 
-export async function getLeads(page = 1, search = '') {
+export async function getLeads(page = 1, search = '', mineOnly = false) {
     const supabase = await createClient()
-    const itemsPerPage = 10
+    const itemsPerPage = 30
     const from = (page - 1) * itemsPerPage
     const to = from + itemsPerPage - 1
 
@@ -71,8 +71,15 @@ export async function getLeads(page = 1, search = '') {
         .from('leads')
         .select('*', { count: 'exact' })
         .eq('is_deleted', false)
-        .order('created_time', { ascending: false })
+        .order('id', { ascending: false })
         .range(from, to)
+
+    if (mineOnly) {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user?.email) {
+            query = query.eq('created_by_email_id', user.email)
+        }
+    }
 
     if (search) {
         let orQuery = `lead_name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%,status.ilike.%${search}%`
@@ -169,9 +176,9 @@ export async function deleteLead(id: number) {
 
 // COMMENTS ACTIONS
 
-export async function getComments(page = 1, search = '') {
+export async function getComments(page = 1, search = '', mineOnly = false) {
     const supabase = await createClient()
-    const itemsPerPage = 10
+    const itemsPerPage = 30
     const from = (page - 1) * itemsPerPage
     const to = from + itemsPerPage - 1
 
@@ -181,6 +188,13 @@ export async function getComments(page = 1, search = '') {
         .eq('is_deleted', false)
         .order('created_time', { ascending: false })
         .range(from, to)
+
+    if (mineOnly) {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user?.email) {
+            query = query.eq('created_by_email_id', user.email)
+        }
+    }
 
     if (search) {
         query = query.or(`comment_text.ilike.%${search}%,created_by_email_id.ilike.%${search}%`)
@@ -271,44 +285,91 @@ export async function deleteComment(id: number, leadId?: number) {
     return { success: true }
 }
 
-export async function getInsights() {
+export async function getInsights(context: 'all_leads' | 'my_leads' | 'all_comments' | 'my_comments' = 'all_leads') {
     const supabase = await createClient()
 
-    const { count: totalLeads } = await supabase
-        .from('leads')
-        .select('*', { count: 'exact', head: true })
-        .eq('is_deleted', false)
+    const { data: { user } } = await supabase.auth.getUser()
+    const userEmail = user?.email
 
-    const { count: newLeads } = await supabase
-        .from('leads')
-        .select('*', { count: 'exact', head: true })
-        .eq('is_deleted', false)
-        .gte('created_time', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()) // Last 24 hours
-
-    // Quick status breakdown
-    // Note: Supabase doesn't support complex GROUP BY easily with simple client usage without RPC usually,
-    // but we can do a few separate counts or fetch all status column (efficient if <10k rows usually, else RPC).
-    // For now, let's fetch purely status column to aggregate manually or just separate counts for key ones.
-    // Let's do a few simple queries for "New", "In Conversation", "Converted".
-
-    const { count: inConversation } = await supabase
-        .from('leads')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'In Conversation')
-        .eq('is_deleted', false)
-
-    const { count: converted } = await supabase // Assuming 'PO' is converted/success
-        .from('leads')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'PO')
-        .eq('is_deleted', false)
-
-    return {
-        totalLeads: totalLeads || 0,
-        newLeads: newLeads || 0,
-        inConversation: inConversation || 0,
-        converted: converted || 0
+    // Helper to build base query
+    const buildQuery = (table: string) => {
+        let q = supabase.from(table).select('*', { count: 'exact', head: true }).eq('is_deleted', false)
+        if (context === 'my_leads' || context === 'my_comments') {
+            if (userEmail) q = q.eq('created_by_email_id', userEmail)
+        }
+        return q
     }
+
+    if (context === 'all_leads' || context === 'my_leads') {
+        const { count: totalLeads } = await buildQuery('leads')
+
+        let newLeadsQuery = buildQuery('leads').gte('created_time', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+        if (context === 'my_leads') {
+            // For "My Leads Contacted Today", assuming "Contacted" status or just any action? User said "My Leads Contacted today".
+            // Let's assume leads with status "Contacted" updated today? Or just added today?
+            // "My Leads Contacted today": Leads I touched today? or Leads with status "Contacted"? 
+            // "My Leads in conversation today": Status In Conversation
+            // "My Leads converted in last 30 days": Status PO, last 30 days
+            // Let's implement based on user names
+        }
+
+        // Let's stick to the requested names mapping roughly to data we can easily get
+        // All Leads: Total, New Today, In Conversation, Converted (PO)
+        // My Leads: Total Added By Me, My Leads Contacted (status=Contacted), My Leads In Conversation, My Leads Converted (PO, 30 days)
+
+        const { count: newLeads } = await newLeadsQuery
+
+        const { count: inConversation } = await buildQuery('leads').eq('status', 'In Conversation')
+
+        let convertedQuery = buildQuery('leads').eq('status', 'PO')
+        if (context === 'my_leads') {
+            convertedQuery = convertedQuery.gte('created_time', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
+        }
+        const { count: converted } = await convertedQuery
+
+        // Special handling for "Contacted" in My Leads
+        let contacted = 0
+        if (context === 'my_leads') {
+            const { count } = await buildQuery('leads').eq('status', 'Contacted').gte('last_edited_time', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+            contacted = count || 0
+        }
+
+        return {
+            metric1: totalLeads || 0,
+            metric2: context === 'my_leads' ? contacted : (newLeads || 0),
+            metric3: inConversation || 0,
+            metric4: converted || 0
+        }
+    }
+
+    // Comments Handling
+    if (context === 'all_comments' || context === 'my_comments') {
+        const { count: totalComments } = await buildQuery('comments')
+
+        const { count: commentsToday } = await buildQuery('comments').gte('created_time', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+
+        // "Conversations Today" -> For comments this is ambiguous. Maybe "In Conversation" status comments today?
+        // User req: "Conversations Today"
+        const { count: conversationsToday } = await buildQuery('comments').eq('status', 'In Conversation').gte('created_time', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+
+        // "POs Today" or "POs by me in last 30 days"
+        let posQuery = buildQuery('comments').eq('status', 'PO')
+        if (context === 'my_comments') {
+            posQuery = posQuery.gte('created_time', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
+        } else {
+            posQuery = posQuery.gte('created_time', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+        }
+        const { count: posCount } = await posQuery
+
+        return {
+            metric1: totalComments || 0,
+            metric2: commentsToday || 0,
+            metric3: conversationsToday || 0,
+            metric4: posCount || 0
+        }
+    }
+
+    return { metric1: 0, metric2: 0, metric3: 0, metric4: 0 }
 }
 
 export async function updateProfile(formData: FormData) {
@@ -337,6 +398,11 @@ export async function updateProfile(formData: FormData) {
         const { error: insertError } = await supabase
             .from('profiles')
             .insert({ id: user.id, name, phone, address, email: user.email })
+
+        if (!insertError) {
+            // Ensure role exists (default 0)
+            await supabase.from('roles').insert({ id: user.id, role: 0 }).select()
+        }
         error = insertError
     }
 
@@ -347,4 +413,24 @@ export async function updateProfile(formData: FormData) {
 
     revalidatePath('/dashboard/profile')
     return { success: true }
+}
+
+export async function sendPasswordReset() {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user || !user.email) {
+        return { error: 'Not authenticated', success: false }
+    }
+
+    const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
+        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback?next=/dashboard/profile`,
+    })
+
+    if (error) {
+        console.error('Reset password error:', error)
+        return { error: 'Failed to send reset email', success: false }
+    }
+
+    return { success: true, message: 'Password reset email sent!' }
 }

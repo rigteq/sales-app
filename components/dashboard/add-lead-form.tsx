@@ -18,8 +18,6 @@ const statusOptions = [
     'In Conversation',
     'Scheduled',
     'DNP',
-    'DND',
-    'Not Interested',
     'Out of reach',
     'Wrong details',
     'PO'

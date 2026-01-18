@@ -27,31 +27,28 @@ export function LeadsTable({ leads }: { leads: Lead[] }) {
                             <div
                                 key={lead.id}
                                 onClick={() => router.push(`/dashboard/leads/${lead.id}`)}
-                                className="mb-4 w-full rounded-xl bg-white p-5 border border-zinc-200 shadow-sm dark:bg-zinc-900 dark:border-zinc-800 cursor-pointer active:scale-[0.98] transition-all"
+                                className="mb-3 w-full rounded-lg bg-white p-3 border border-zinc-200 shadow-sm dark:bg-zinc-900 dark:border-zinc-800 cursor-pointer active:scale-[0.98] transition-all"
                             >
-                                <div className="flex items-start justify-between border-b border-zinc-100 pb-4 mb-4 dark:border-zinc-800">
+                                <div className="flex items-start justify-between border-b border-zinc-50 pb-2 mb-2 dark:border-zinc-800">
                                     <div>
-                                        <div className="mb-1 flex items-center">
-                                            <p className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">{lead.lead_name}</p>
+                                        <div className="flex items-center">
+                                            <p className="font-semibold text-zinc-900 dark:text-zinc-100">{lead.lead_name}</p>
                                         </div>
-                                        <p className="text-sm text-zinc-500 dark:text-zinc-400">{lead.email}</p>
+                                        <p className="text-xs text-zinc-500 dark:text-zinc-400">{lead.email}</p>
                                     </div>
-                                    <div className={`rounded-full px-2.5 py-0.5 text-xs font-medium shrink-0 ${getStatusColor(lead.status || '')}`}>
+                                    <div className={`rounded-full px-2 py-0.5 text-[10px] font-medium shrink-0 ${getStatusColor(lead.status || '')}`}>
                                         {lead.status}
                                     </div>
                                 </div>
-                                <div className="space-y-3">
-                                    <div className="flex justify-between items-center text-sm">
-                                        <span className="text-zinc-500 dark:text-zinc-400">Phone</span>
+                                <div className="grid grid-cols-2 gap-2 text-xs">
+                                    <div>
+                                        <span className="text-zinc-500 dark:text-zinc-400">Phone: </span>
                                         <span className="font-medium text-zinc-900 dark:text-zinc-100">{lead.phone}</span>
                                     </div>
-                                    <div className="flex justify-between items-center text-sm">
-                                        <span className="text-zinc-500 dark:text-zinc-400">Created</span>
+                                    <div className="text-right">
+                                        <span className="text-zinc-500 dark:text-zinc-400">Created: </span>
                                         <span className="text-zinc-900 dark:text-zinc-100">{new Date(lead.created_time).toLocaleDateString()}</span>
                                     </div>
-                                </div>
-                                <div className="mt-4 pt-4 border-t border-zinc-100 dark:border-zinc-800 flex justify-end">
-                                    <span className="text-xs font-medium text-zinc-500">Tap to view details</span>
                                 </div>
                             </div>
                         ))}
