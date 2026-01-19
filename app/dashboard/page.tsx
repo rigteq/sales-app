@@ -1,5 +1,6 @@
 
 import { AddLeadForm } from '@/components/dashboard/add-lead-form'
+import { AddUserForm } from '@/components/dashboard/add-user-form'
 import { InsightsView } from '@/components/dashboard/insights-view'
 
 export default function Dashboard() {
@@ -18,8 +19,15 @@ export default function Dashboard() {
                 <InsightsView />
             </div>
 
-            <div className="w-full flex justify-center">
+            <div className="w-full flex flex-col items-center gap-8">
                 <AddLeadForm />
+
+                {/* Add User Form - Only visible to Admins/Superadmins internally? 
+                    The AddUserForm component handles role checks internally? 
+                    Let's check. Yes, it fetches role. 
+                    But usually, we should conditionally render it to avoid layout shifts.
+                    But standard is fine. */}
+                <AddUserForm />
             </div>
         </div>
     )

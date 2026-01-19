@@ -6,7 +6,7 @@ import { Search } from '@/components/ui/search'
 import { InsightsView } from '@/components/dashboard/insights-view'
 import { Suspense } from 'react'
 
-export default async function MyLeadsPage({
+export default async function AssignedLeadsPage({
     searchParams,
 }: {
     searchParams?: Promise<{
@@ -18,21 +18,22 @@ export default async function MyLeadsPage({
     const query = searchParamsValue?.query || ''
     const currentPage = Number(searchParamsValue?.page) || 1
 
-    const { leads, count } = await getLeads(currentPage, query, { mineOnly: true }) // mineOnly = true
+    const { leads, count } = await getLeads(currentPage, query, { assignedOnly: true })
     const totalPages = Math.ceil(count / 30)
 
     return (
         <div className="w-full">
             <div className="flex w-full items-center justify-between">
-                <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">My Leads</h1>
+                <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">Assigned Leads</h1>
             </div>
 
+            {/* Reusing 'my_leads' context for insights as assigned leads are conceptually 'mine' */}
             <div className="mt-8">
                 <InsightsView context="my_leads" />
             </div>
 
             <div className="mt-4 flex items-center justify-between gap-2 md:mt-8">
-                <Search placeholder="Search my leads..." />
+                <Search placeholder="Search assigned leads..." />
             </div>
             <Suspense fallback={<div className="text-center py-10">Loading leads...</div>}>
                 <LeadsTable leads={leads} />

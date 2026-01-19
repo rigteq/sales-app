@@ -1,13 +1,12 @@
-
 'use client'
 
 import { useActionState } from 'react'
-import { addLead } from '@/app/dashboard/actions'
+import { addLead, getAssignableUsers, getCurrentUserFullDetails } from '@/app/dashboard/actions'
 import { Loader2, Plus, CheckCircle2, AlertCircle } from 'lucide-react'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 const initialState = {
-    error: undefined as string | undefined, // Explicit type to match potential return
+    error: undefined as string | undefined,
     success: false,
     message: ''
 }
@@ -26,6 +25,18 @@ const statusOptions = [
 export function AddLeadForm() {
     const [state, formAction, isPending] = useActionState(addLead, initialState)
     const formRef = useRef<HTMLFormElement>(null)
+    const [assignableUsers, setAssignableUsers] = useState<{ email: string, name: string }[]>([])
+    const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null)
+
+    useEffect(() => {
+        // Fetch users and current user
+        getAssignableUsers().then((users: any) => {
+            if (Array.isArray(users)) setAssignableUsers(users)
+        })
+        getCurrentUserFullDetails().then((details: any) => {
+            if (details?.user?.email) setCurrentUserEmail(details.user.email)
+        })
+    }, [])
 
     useEffect(() => {
         if (state?.success) {
@@ -144,6 +155,34 @@ export function AddLeadForm() {
                             </div>
                         </div>
                     </div>
+
+                    {/* Assigned To */}
+                    <div className="space-y-2">
+                        <label htmlFor="assignedTo" className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                            Assigned To
+                        </label>
+                        <div className="relative">
+                            <select
+                                id="assignedTo"
+                                name="assignedTo"
+                                defaultValue={currentUserEmail || ''}
+                                key={currentUserEmail} // Force re-render when email loads
+                                className="flex h-10 w-full appearance-none rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:border-zinc-800 dark:bg-zinc-950 dark:focus-visible:ring-zinc-300"
+                            >
+                                {assignableUsers.map((u) => (
+                                    <option key={u.email} value={u.email}>
+                                        {`${u.name} (${u.email})`}
+                                    </option>
+                                ))}
+                            </select>
+                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-zinc-500">
+                                <svg className="h-4 w-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                    <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
 
                 {/* Note - Full Width */}

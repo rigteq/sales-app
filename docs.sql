@@ -106,44 +106,63 @@ CREATE TABLE IF NOT EXISTS public.company (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- 6. Create Company Mapping Table
-CREATE TABLE IF NOT EXISTS public.company_mapping (
-    user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
-    company_id UUID REFERENCES public.company(id) ON DELETE CASCADE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
-    PRIMARY KEY (user_id, company_id)
-);
+-- NEW ADDITIONS START HERE
 
--- 7. Population Script
+-- 1. Add assigned_to_email_id to leads
+ALTER TABLE public.leads 
+ADD COLUMN IF NOT EXISTS assigned_to_email_id TEXT;
+
+-- update existing leads to have assigned_to = created_by
+UPDATE public.leads 
+SET assigned_to_email_id = created_by_email_id 
+WHERE assigned_to_email_id IS NULL;
+
+
+-- 2. Drop company_mapping and Update Profiles
+DROP TABLE IF EXISTS public.company_mapping;
+
+ALTER TABLE public.profiles 
+ADD COLUMN IF NOT EXISTS company_id UUID REFERENCES public.company(id) ON DELETE SET NULL;
+
+-- 3. Populate company_id in profiles based on logic (For now, assign all to 'rigteq' if null)
 DO $$
 DECLARE
     v_company_id UUID;
-    v_profile RECORD;
 BEGIN
-    -- Create Company if not exists
     SELECT id INTO v_company_id FROM public.company WHERE companyname = 'rigteq' LIMIT 1;
     
-    IF v_company_id IS NULL THEN
-        INSERT INTO public.company (companyname, companyemail, companydetails)
-        VALUES ('rigteq', 'ops@rq.com', 'Main Company')
-        RETURNING id INTO v_company_id;
+    IF v_company_id IS NOT NULL THEN
+        UPDATE public.profiles 
+        SET company_id = v_company_id 
+        WHERE company_id IS NULL;
     END IF;
-
-    -- Iterate over all profiles to assign role 2 and map to company
-    FOR v_profile IN SELECT id FROM public.profiles LOOP
-        
-        -- Insert into company_mapping
-        BEGIN
-            INSERT INTO public.company_mapping (user_id, company_id)
-            VALUES (v_profile.id, v_company_id);
-        EXCEPTION WHEN unique_violation THEN
-            -- Ignore if already mapped
-        END;
-
-        -- Insert or Update Role to 2 (Superadmin)
-        INSERT INTO public.roles (id, role)
-        VALUES (v_profile.id, 2)
-        ON CONFLICT (id) DO UPDATE SET role = 2;
-        
-    END LOOP;
 END $$;
+
+-- 4. Reconstruct Roles Schema
+
+-- Drop old roles table
+DROP TABLE IF EXISTS public.roles;
+
+-- Create new roles table
+CREATE TABLE IF NOT EXISTS public.roles (
+    roleId INTEGER PRIMARY KEY,
+    roleName TEXT NOT NULL,
+    createdDate TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Insert Roles
+INSERT INTO public.roles (roleId, roleName) VALUES (0, 'User'), (1, 'Admin'), (2, 'SuperAdmin')
+ON CONFLICT (roleId) DO NOTHING;
+
+-- Update Profiles with roleId
+ALTER TABLE public.profiles 
+ADD COLUMN IF NOT EXISTS roleId INTEGER REFERENCES public.roles(roleId) DEFAULT 0;
+
+-- Set all existing profiles to SuperAdmin (2) as per previous logic (or as requested "Set roleId for all profiles as 2")
+UPDATE public.profiles SET roleId = 2;
+
+-- 5. Performance Indexes
+CREATE INDEX IF NOT EXISTS idx_leads_created_by ON public.leads(created_by_email_id);
+CREATE INDEX IF NOT EXISTS idx_leads_assigned_to ON public.leads(assigned_to_email_id);
+CREATE INDEX IF NOT EXISTS idx_leads_status ON public.leads(status);
+CREATE INDEX IF NOT EXISTS idx_comments_lead_id ON public.comments(lead_id);

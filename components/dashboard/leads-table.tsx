@@ -69,7 +69,7 @@ export function LeadsTable({ leads }: { leads: Lead[] }) {
                                     Location
                                 </th>
                                 <th scope="col" className="px-3 py-5 font-medium dark:text-zinc-200">
-                                    Created By
+                                    Assigned To
                                 </th>
                                 <th scope="col" className="px-3 py-5 font-medium dark:text-zinc-200">
                                     Details
@@ -104,7 +104,7 @@ export function LeadsTable({ leads }: { leads: Lead[] }) {
                                         {lead.location || '-'}
                                     </td>
                                     <td className="whitespace-nowrap px-3 py-3 text-zinc-500 dark:text-zinc-400 text-xs">
-                                        {lead.created_by_email_id}
+                                        {lead.assigned_to_email_id || lead.created_by_email_id}
                                     </td>
                                     <td className="whitespace-nowrap px-3 py-3 text-zinc-500 max-w-xs truncate dark:text-zinc-400">
                                         <div className="flex flex-col text-xs">
