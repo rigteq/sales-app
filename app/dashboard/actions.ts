@@ -366,7 +366,7 @@ export async function addUser(prevState: any, formData: FormData) {
     const supabase = await createClient() // For checking current user perms
 
     const currentUser = await getCurrentUserFullDetails()
-    if (!currentUser || currentUser.role === 0) return { error: 'Unauthorized', success: false }
+    if (!currentUser || currentUser.role === 0) return { error: 'Unauthorized', success: false, message: '' }
 
     const email = formData.get('email') as string
     const password = formData.get('password') as string
@@ -376,7 +376,7 @@ export async function addUser(prevState: any, formData: FormData) {
     const targetCompanyId = formData.get('companyId') as string // Optional, Superadmin can set
     const roleToAssign = formData.get('role') as string // '0' or '1'
 
-    if (!email || !password || !name) return { error: 'Missing Required Fields', success: false }
+    if (!email || !password || !name) return { error: 'Missing Required Fields', success: false, message: '' }
 
     const companyId = (currentUser.role === 2 && targetCompanyId) ? targetCompanyId : currentUser.profile.company_id
 
@@ -390,10 +390,10 @@ export async function addUser(prevState: any, formData: FormData) {
 
     if (authError) {
         console.error('Create User Error:', authError)
-        return { error: authError.message, success: false }
+        return { error: authError.message, success: false, message: '' }
     }
 
-    if (!authData.user) return { error: 'Failed to create user', success: false }
+    if (!authData.user) return { error: 'Failed to create user', success: false, message: '' }
     const newUserId = authData.user.id
 
     // 2. Insert Profile with RoleId
@@ -409,13 +409,13 @@ export async function addUser(prevState: any, formData: FormData) {
 
     if (profileError) {
         console.error('Create Profile Error:', profileError)
-        return { error: 'User created but profile failed: ' + profileError.message, success: false }
+        return { error: 'User created but profile failed: ' + profileError.message, success: false, message: '' }
     }
 
     // No need to insert into 'roles' table anymore as per new schema request where roleId is on profiles.
 
     revalidatePath('/dashboard/users')
-    return { success: true, message: 'User created successfully' }
+    return { success: true, message: 'User created successfully', error: undefined }
 }
 
 export async function getUsers() {
