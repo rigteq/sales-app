@@ -20,10 +20,10 @@ export async function getCurrentUserFullDetails() {
     // Get Profile (with roleId) and Company
     const { data: profile } = await supabase.from('profiles').select('*, company:company_id(*)').eq('id', user.id).single()
 
-    // Role is now in profile.roleId (FK to roles table, but integer matches 0,1,2 enum like usage)
-    // Note: Postgres lowercases unquoted columns, so we check 'roleid' first.
+    // Role is now in profile.role_id (FK to roles table, but integer matches 0,1,2 enum like usage)
+    // Note: Postgres lowercases unquoted columns.
     // @ts-ignore
-    const roleId = profile?.roleid ?? profile?.roleId ?? 0
+    const roleId = profile?.role_id ?? profile?.roleid ?? profile?.roleId ?? 0
 
     return { user, profile, role: roleId as UserRole }
 }
@@ -373,6 +373,7 @@ export async function addUser(prevState: any, formData: FormData) {
     const name = formData.get('name') as string
     const phone = formData.get('phone') as string
     const gender = formData.get('gender') as string
+    const address = formData.get('address') as string
     const targetCompanyId = formData.get('companyId') as string // Optional, Superadmin can set
     const roleToAssign = formData.get('role') as string // '0' or '1'
 
@@ -403,19 +404,23 @@ export async function addUser(prevState: any, formData: FormData) {
         email,
         phone,
         gender,
+        address,
         company_id: companyId,
-        roleId: Number(roleToAssign) || 0
+        role_id: Number(roleToAssign) || 0
     })
 
     if (profileError) {
         console.error('Create Profile Error:', profileError)
-        return { error: 'User created but profile failed: ' + profileError.message, success: false, message: '' }
+        // Rollback: Delete the Auth User if profile creation fails
+        await supabaseAdmin.auth.admin.deleteUser(newUserId)
+        return { error: 'User created but profile failed (User deleted/rolled back): ' + profileError.message, success: false, message: '' }
     }
 
     // No need to insert into 'roles' table anymore as per new schema request where roleId is on profiles.
 
     revalidatePath('/dashboard/users')
-    return { success: true, message: 'User created successfully', error: undefined }
+    const entityName = Number(roleToAssign) === 1 ? 'Admin' : 'User'
+    return { success: true, message: `${entityName} created successfully`, error: undefined }
 }
 
 export async function getUsers() {
@@ -430,13 +435,19 @@ export async function getUsers() {
     // The previous code selected `roles(role)` which implies a separate table relation.
     // New relation: profile.roleId -> roles.roleId.
 
-    let query = supabase.from('profiles').select('*, role:roles(roleId, roleName), company(companyname)')
+    let query = supabase.from('profiles').select('*, role:roles(roleid, rolename), company(companyname)')
 
     if (userDetails.role !== 2) {
         query = query.eq('company_id', userDetails.profile.company_id)
     }
 
-    const { data } = await query
+    const { data, error } = await query
+
+    if (error) {
+        console.error('Error in getUsers:', error)
+        return []
+    }
+
     return data || []
 }
 
@@ -445,7 +456,7 @@ export async function getUser(id: string) {
     // Join with roles and company
     const { data, error } = await supabase
         .from('profiles')
-        .select('*, role:roles(roleId, roleName), company(companyname)')
+        .select('*, role:roles(roleid, rolename), company(companyname)')
         .eq('id', id)
         .single()
 
@@ -588,4 +599,42 @@ export async function sendPasswordReset() {
 
     if (error) return { error: 'Failed to send reset email', success: false }
     return { success: true, message: 'Password reset email sent!' }
+}
+// --- COMPANY ---
+
+export async function addCompany(prevState: any, formData: FormData) {
+    const supabase = await createClient()
+    const userDetails = await getCurrentUserFullDetails()
+
+    if (!userDetails || userDetails.role !== 2) {
+        return { error: 'Unauthorized. Only Superadmins can add companies.', success: false, message: '' }
+    }
+
+    const companyname = formData.get('companyname') as string
+    const companyemail = formData.get('companyemail') as string
+    const companyphone = formData.get('companyphone') as string
+    const companydetails = formData.get('companydetails') as string
+
+    if (!companyname) {
+        return { error: 'Company Name is required', success: false, message: '' }
+    }
+
+    // Insert into company table
+    const { error } = await supabase
+        .from('company')
+        .insert({
+            companyname,
+            companyemail,
+            companyphone,
+            companydetails
+        })
+
+    if (error) {
+        console.error('Add Company Error:', error)
+        return { error: error.message, success: false, message: '' }
+    }
+
+    revalidatePath('/dashboard')
+    // Maybe revalidate a companies list if it exists?
+    return { success: true, message: 'Company added successfully', error: undefined }
 }

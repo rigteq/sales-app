@@ -1,6 +1,7 @@
 
 import { AddLeadForm } from '@/components/dashboard/add-lead-form'
 import { AddUserForm } from '@/components/dashboard/add-user-form'
+import { AddCompanyForm } from '@/components/dashboard/add-company-form'
 import { InsightsView } from '@/components/dashboard/insights-view'
 
 export default function Dashboard() {
@@ -28,6 +29,7 @@ export default function Dashboard() {
                     But usually, we should conditionally render it to avoid layout shifts.
                     But standard is fine. */}
                 <AddUserForm />
+                <AddCompanyForm />
             </div>
         </div>
     )

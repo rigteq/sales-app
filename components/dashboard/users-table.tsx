@@ -38,10 +38,12 @@ export function UsersTable({ users, showCompany }: { users: any[], showCompany?:
                     </thead>
                     <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
                         {users.map((user) => {
-                            // Fix Role Access: Actions.ts returns role object OR plain roleId on profile.
+                            // Fix Role Access: Actions.ts returns role object OR plain role_id on profile.
                             // Join alias is 'role'.
-                            const roleName = user.role?.roleName || (user.roleId === 2 ? 'Superadmin' : user.roleId === 1 ? 'Admin' : 'User')
-                            const roleId = user.role?.roleId ?? user.roleId ?? 0
+                            // Role is now role_id in DB (profiles) and roleid in DB (roles).
+                            const effectiveRoleId = user.role?.roleId ?? user.role?.roleid ?? user.role_id ?? user.roleId ?? 0
+                            const roleName = user.role?.rolename ?? user.role?.roleName ?? (effectiveRoleId === 2 ? 'Superadmin' : effectiveRoleId === 1 ? 'Admin' : 'User')
+                            const roleId = effectiveRoleId
 
                             return (
                                 <tr key={user.id} className="group hover:bg-zinc-50 dark:hover:bg-zinc-900/50">

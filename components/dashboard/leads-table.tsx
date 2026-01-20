@@ -1,8 +1,11 @@
 'use client'
 
 import { Lead } from '@/types'
-import { useRouter } from 'next/navigation'
-import { Eye } from 'lucide-react'
+import { useRouter, useSearchParams, usePathname } from 'next/navigation'
+import { Eye, Loader2 } from 'lucide-react'
+import { useState, useTransition } from 'react'
+
+
 
 // Helper to determine status color
 const getStatusColor = (status: string) => {
@@ -18,6 +21,20 @@ const getStatusColor = (status: string) => {
 
 export function LeadsTable({ leads }: { leads: Lead[] }) {
     const router = useRouter()
+    const pathname = usePathname()
+    const searchParams = useSearchParams()
+    const page = searchParams.get('page') || '1'
+
+    const [isPending, startTransition] = useTransition()
+    const [loadingId, setLoadingId] = useState<number | null>(null)
+
+    const handleRowClick = (id: number) => {
+        setLoadingId(id)
+        startTransition(() => {
+            router.push(`/dashboard/leads/${id}?returnPage=${page}&returnPath=${pathname}`)
+        })
+    }
+
     return (
         <div className="mt-6 flow-root overflow-x-auto">
             <div className="inline-block min-w-full align-middle">
@@ -26,15 +43,18 @@ export function LeadsTable({ leads }: { leads: Lead[] }) {
                         {leads?.map((lead) => (
                             <div
                                 key={lead.id}
-                                onClick={() => router.push(`/dashboard/leads/${lead.id}`)}
-                                className="mb-3 w-full rounded-lg bg-white p-3 border border-zinc-200 shadow-sm dark:bg-zinc-900 dark:border-zinc-800 cursor-pointer active:scale-[0.98] transition-all"
+                                onClick={() => handleRowClick(lead.id)}
+                                className={`mb-3 w-full rounded-lg bg-white p-3 border border-zinc-200 shadow-sm dark:bg-zinc-900 dark:border-zinc-800 cursor-pointer active:scale-[0.98] transition-all ${loadingId === lead.id ? 'opacity-75 cursor-wait' : ''}`}
                             >
                                 <div className="flex items-start justify-between border-b border-zinc-50 pb-2 mb-2 dark:border-zinc-800">
-                                    <div>
-                                        <div className="flex items-center">
-                                            <p className="font-semibold text-zinc-900 dark:text-zinc-100">{lead.lead_name}</p>
+                                    <div className="flex items-center gap-2">
+                                        <div>
+                                            <div className="flex items-center gap-2">
+                                                <p className="font-semibold text-zinc-900 dark:text-zinc-100">{lead.lead_name}</p>
+                                                {loadingId === lead.id && <Loader2 className="h-3 w-3 animate-spin text-zinc-500" />}
+                                            </div>
+                                            <p className="text-xs text-zinc-500 dark:text-zinc-400">{lead.email}</p>
                                         </div>
-                                        <p className="text-xs text-zinc-500 dark:text-zinc-400">{lead.email}</p>
                                     </div>
                                     <div className={`rounded-full px-2 py-0.5 text-[10px] font-medium shrink-0 ${getStatusColor(lead.status || '')}`}>
                                         {lead.status}
@@ -80,13 +100,16 @@ export function LeadsTable({ leads }: { leads: Lead[] }) {
                             {leads?.map((lead) => (
                                 <tr
                                     key={lead.id}
-                                    onClick={() => router.push(`/dashboard/leads/${lead.id}`)}
-                                    className="w-full border-b border-zinc-100 py-3 text-sm last-of-type:border-none hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50 cursor-pointer transition-colors"
+                                    onClick={() => handleRowClick(lead.id)}
+                                    className={`w-full border-b border-zinc-100 py-3 text-sm last-of-type:border-none hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50 cursor-pointer transition-colors ${loadingId === lead.id ? 'opacity-75 cursor-wait' : ''}`}
                                 >
                                     <td className="whitespace-nowrap py-3 pl-6 pr-3">
                                         <div className="flex items-center gap-3">
                                             <div className="flex flex-col">
-                                                <p className="font-medium text-zinc-900 dark:text-zinc-100">{lead.lead_name}</p>
+                                                <div className="flex items-center gap-2">
+                                                    <p className="font-medium text-zinc-900 dark:text-zinc-100">{lead.lead_name}</p>
+                                                    {loadingId === lead.id && <Loader2 className="h-3 w-3 animate-spin text-zinc-500" />}
+                                                </div>
                                                 <p className="text-xs text-zinc-500 max-w-[150px] truncate">ID: {lead.id}</p>
                                                 <p className="text-zinc-500 dark:text-zinc-400">{lead.email}</p>
                                             </div>

@@ -10,10 +10,16 @@ import { createClient } from '@/utils/supabase/server'
 
 export default async function LeadDetailsPage({
     params,
+    searchParams,
 }: {
     params: Promise<{ id: string }>
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
     const { id } = await params
+    const resolvedSearchParams = await searchParams
+    const returnPage = resolvedSearchParams?.returnPage || '1'
+    const returnPath = resolvedSearchParams?.returnPath || '/dashboard/leads'
+
     const leadId = Number(id)
 
     if (isNaN(leadId)) {
@@ -39,7 +45,10 @@ export default async function LeadDetailsPage({
 
     return (
         <div className="w-full max-w-5xl mx-auto space-y-6">
-            <Link href="/dashboard/leads" className="inline-flex items-center text-sm text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100">
+            <Link
+                href={`${returnPath}?page=${returnPage}`}
+                className="inline-flex items-center text-sm text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+            >
                 <ChevronLeft className="mr-1 h-4 w-4" />
                 Back to Leads
             </Link>

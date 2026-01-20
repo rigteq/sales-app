@@ -166,3 +166,34 @@ CREATE INDEX IF NOT EXISTS idx_leads_created_by ON public.leads(created_by_email
 CREATE INDEX IF NOT EXISTS idx_leads_assigned_to ON public.leads(assigned_to_email_id);
 CREATE INDEX IF NOT EXISTS idx_leads_status ON public.leads(status);
 CREATE INDEX IF NOT EXISTS idx_comments_lead_id ON public.comments(lead_id);
+
+-- 6. Rename roleId to role_id in profiles
+ALTER TABLE public.profiles 
+RENAME COLUMN roleid TO role_id;
+
+-- 7. Add RLS for roles and company tables
+
+-- Roles Table
+ALTER TABLE public.roles ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Enable read access for authenticated users" ON public.roles
+    FOR SELECT TO authenticated USING (true);
+
+-- Company Table
+ALTER TABLE public.company ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Enable read access for authenticated users" ON public.company
+    FOR SELECT TO authenticated USING (true);
+
+-- Allow Superadmins (role_id=2 in profiles) to create/update companies
+-- Note: This requires a join or subquery on profiles using auth.uid()
+CREATE POLICY "Enable insert/update for Superadmins" ON public.company
+    FOR ALL TO authenticated USING (
+        EXISTS (
+            SELECT 1 FROM public.profiles 
+            WHERE profiles.id = auth.uid() 
+            AND profiles.role_id = 2
+        )
+    );
+
+

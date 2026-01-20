@@ -22,7 +22,10 @@ export default async function UsersPage({
     const filterType = params?.filter
 
     if (filterType === 'admins') {
-        filteredUsers = users.filter((u: any) => (u.role?.roleId ?? u.roleId) === 1)
+        filteredUsers = users.filter((u: any) => (u.role?.roleId ?? u.role?.roleid ?? u.role_id ?? u.roleId) === 1)
+    } else {
+        // Default: Show only generic Users (Role 0)
+        filteredUsers = users.filter((u: any) => (u.role?.roleId ?? u.role?.roleid ?? u.role_id ?? u.roleId) === 0)
     }
 
     return (

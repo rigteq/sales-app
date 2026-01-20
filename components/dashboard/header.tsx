@@ -101,10 +101,10 @@ export function Header({ userName, role = 0 }: { userName?: string, role?: numbe
                         {role === 2 ? (
                             <NavDropdown title="Users" id="users">
                                 <Link onClick={() => setActiveDropdown(null)} href="/dashboard/users" className="block px-2 py-1.5 text-sm rounded-sm hover:bg-zinc-100 dark:hover:bg-zinc-900 text-zinc-700 dark:text-zinc-300">
-                                    All Users
+                                    Users
                                 </Link>
                                 <Link onClick={() => setActiveDropdown(null)} href="/dashboard/users?filter=admins" className="block px-2 py-1.5 text-sm rounded-sm hover:bg-zinc-100 dark:hover:bg-zinc-900 text-zinc-700 dark:text-zinc-300">
-                                    All Admins
+                                    Admins
                                 </Link>
                             </NavDropdown>
                         ) : role === 1 ? (
@@ -191,6 +191,9 @@ export function Header({ userName, role = 0 }: { userName?: string, role?: numbe
 
                     {role !== 0 && (
                         <Link href="/dashboard/users" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-medium">Users</Link>
+                    )}
+                    {role === 2 && (
+                        <Link href="/dashboard/users?filter=admins" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-medium">Admins</Link>
                     )}
                     {role === 2 && (
                         <Link href="/dashboard/companies" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-medium text-zinc-900 dark:text-zinc-50">Companies</Link>

@@ -80,6 +80,12 @@ export function AddUserForm() {
                         <input name="password" type="password" required placeholder="******" className="flex h-10 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:border-zinc-800 dark:bg-zinc-950" />
                     </div>
 
+                    {/* Address */}
+                    <div className="space-y-2 sm:col-span-2">
+                        <label className="text-sm font-medium text-zinc-900 dark:text-zinc-100">Address</label>
+                        <textarea name="address" rows={2} placeholder="123 Main St, City, Country" className="flex w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:border-zinc-800 dark:bg-zinc-950" />
+                    </div>
+
                     {/* Gender */}
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-zinc-900 dark:text-zinc-100">Gender</label>
@@ -90,14 +96,22 @@ export function AddUserForm() {
                         </select>
                     </div>
 
-                    {/* Role */}
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium text-zinc-900 dark:text-zinc-100">Role</label>
-                        <select name="role" className="flex h-10 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:border-zinc-800 dark:bg-zinc-950">
-                            <option value="0">User</option>
-                            {currentUserRole === 2 && <option value="1">Admin</option>}
-                        </select>
-                    </div>
+                    {/* Role - Only visible to Superadmin */}
+                    {currentUserRole === 2 ? (
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-zinc-900 dark:text-zinc-100">Role</label>
+                            <select
+                                name="role"
+                                onChange={(e) => setRole(Number(e.target.value))}
+                                className="flex h-10 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:border-zinc-800 dark:bg-zinc-950"
+                            >
+                                <option value="0">User</option>
+                                <option value="1">Admin</option>
+                            </select>
+                        </div>
+                    ) : (
+                        <input type="hidden" name="role" value="0" />
+                    )}
 
                     {/* Company (Superadmin Only) */}
                     {currentUserRole === 2 && (
@@ -128,7 +142,7 @@ export function AddUserForm() {
                 <div className="flex justify-end pt-2">
                     <button type="submit" disabled={isPending} className="inline-flex items-center justify-center gap-2 rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-zinc-50 hover:bg-zinc-900/90 disabled:opacity-50">
                         {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-                        Create User
+                        {role === 1 ? 'Create Admin' : 'Create User'}
                     </button>
                 </div>
             </form>
