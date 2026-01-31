@@ -12,28 +12,10 @@ const initialState = {
     message: ''
 }
 
-export function AddUserForm() {
+export function AddUserForm({ currentUserRole, companies = [] }: { currentUserRole: number, companies?: any[] }) {
     const [state, formAction, isPending] = useActionState(addUser, initialState)
     const formRef = useRef<HTMLFormElement>(null)
     const [role, setRole] = useState<number>(0)
-    const [companies, setCompanies] = useState<any[]>([])
-    const [currentUserRole, setCurrentUserRole] = useState<number | null>(null)
-
-    useEffect(() => {
-        // Fetch current user details to know if Superadmin
-        getCurrentUserFullDetails().then(details => {
-            if (details) {
-                setCurrentUserRole(details.role)
-                if (details.role === 2) {
-                    getCompanies().then(res => {
-                        setCompanies(res.companies)
-                    })
-                }
-            } else {
-                setCurrentUserRole(0) // Default to user if fail
-            }
-        })
-    }, [])
 
     const { addToast } = useToast()
 
@@ -45,6 +27,8 @@ export function AddUserForm() {
             addToast(state.error, 'error')
         }
     }, [state, addToast])
+
+    if (currentUserRole === 0) return null
 
     // Strict Task 1: If User Role (0), do not render the form.
     if (currentUserRole === 0) return null

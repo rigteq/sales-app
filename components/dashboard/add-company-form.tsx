@@ -15,14 +15,6 @@ export function AddCompanyForm() {
     const [state, formAction, isPending] = useActionState(addCompany, initialState)
     const formRef = useRef<HTMLFormElement>(null)
 
-    const [currentUserRole, setCurrentUserRole] = useState<number>(0)
-
-    useEffect(() => {
-        getCurrentUserFullDetails().then(details => {
-            if (details) setCurrentUserRole(details.role)
-        })
-    }, [])
-
     const { addToast } = useToast()
 
     useEffect(() => {
@@ -33,8 +25,6 @@ export function AddCompanyForm() {
             addToast(state.error, 'error')
         }
     }, [state, addToast])
-
-    if (currentUserRole !== 2) return null
 
     return (
         <div className="w-full rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-950 mt-8">

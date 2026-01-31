@@ -3,8 +3,18 @@ import { AddLeadForm } from '@/components/dashboard/add-lead-form'
 import { AddUserForm } from '@/components/dashboard/add-user-form'
 import { AddCompanyForm } from '@/components/dashboard/add-company-form'
 import { InsightsView } from '@/components/dashboard/insights-view'
+import { getCurrentUserFullDetails, getCompanies } from '@/app/dashboard/actions'
 
-export default function Dashboard() {
+export default async function Dashboard() {
+    const userDetails = await getCurrentUserFullDetails()
+    const role = userDetails?.role || 0
+
+    let companies: any[] = []
+    if (role === 2) {
+        const res = await getCompanies()
+        companies = res.companies || []
+    }
+
     return (
         <div className="flex flex-col items-center justify-start space-y-8">
             <div className="w-full text-left">
@@ -23,13 +33,15 @@ export default function Dashboard() {
             <div className="w-full flex flex-col items-center gap-8">
                 <AddLeadForm />
 
-                {/* Add User Form - Only visible to Admins/Superadmins internally? 
-                    The AddUserForm component handles role checks internally? 
-                    Let's check. Yes, it fetches role. 
-                    But usually, we should conditionally render it to avoid layout shifts.
-                    But standard is fine. */}
-                <AddUserForm />
-                <AddCompanyForm />
+                {/* Add User Form - Visible to Admins (1) and Superadmins (2) */}
+                {role > 0 && (
+                    <AddUserForm currentUserRole={role} companies={companies} />
+                )}
+
+                {/* Add Company Form - Visible Only to Superadmin (2) */}
+                {role === 2 && (
+                    <AddCompanyForm />
+                )}
             </div>
         </div>
     )
