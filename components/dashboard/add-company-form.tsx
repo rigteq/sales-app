@@ -37,15 +37,15 @@ export function AddCompanyForm() {
     if (currentUserRole !== 2) return null
 
     return (
-        <div className="w-full rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950 mt-8">
-            <div className="border-b border-zinc-200 p-6 dark:border-zinc-800">
+        <div className="w-full rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-950 mt-8">
+            <div className="border-b border-slate-200 p-6 dark:border-slate-800">
                 <div className="flex items-center gap-2">
-                    <Building2 className="h-5 w-5 text-zinc-500" />
-                    <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+                    <Building2 className="h-5 w-5 text-slate-500" />
+                    <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">
                         Add New Company
                     </h2>
                 </div>
-                <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                     Register a new organization in the system.
                 </p>
             </div>
@@ -54,26 +54,26 @@ export function AddCompanyForm() {
                 <div className="grid gap-6 sm:grid-cols-2">
                     {/* Company Name */}
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-zinc-900 dark:text-zinc-100">Company Name *</label>
-                        <input name="companyname" type="text" required placeholder="Acme Inc." className="flex h-10 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:border-zinc-800 dark:bg-zinc-950" />
+                        <label className="text-sm font-medium text-slate-900 dark:text-slate-100">Company Name *</label>
+                        <input name="companyname" type="text" required placeholder="Acme Inc." className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 dark:border-slate-800 dark:bg-slate-950" />
                     </div>
 
                     {/* Email */}
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-zinc-900 dark:text-zinc-100">Company Email</label>
-                        <input name="companyemail" type="email" placeholder="contact@acme.com" className="flex h-10 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:border-zinc-800 dark:bg-zinc-950" />
+                        <label className="text-sm font-medium text-slate-900 dark:text-slate-100">Company Email</label>
+                        <input name="companyemail" type="email" placeholder="contact@acme.com" className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 dark:border-slate-800 dark:bg-slate-950" />
                     </div>
 
                     {/* Phone */}
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-zinc-900 dark:text-zinc-100">Company Phone</label>
-                        <input name="companyphone" type="tel" placeholder="+1 234 567 890" className="flex h-10 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:border-zinc-800 dark:bg-zinc-950" />
+                        <label className="text-sm font-medium text-slate-900 dark:text-slate-100">Company Phone</label>
+                        <input name="companyphone" type="tel" placeholder="+1 234 567 890" className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 dark:border-slate-800 dark:bg-slate-950" />
                     </div>
 
                     {/* Details */}
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-zinc-900 dark:text-zinc-100">Details</label>
-                        <input name="companydetails" type="text" placeholder="Additional info..." className="flex h-10 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:border-zinc-800 dark:bg-zinc-950" />
+                        <label className="text-sm font-medium text-slate-900 dark:text-slate-100">Details</label>
+                        <input name="companydetails" type="text" placeholder="Additional info..." className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 dark:border-slate-800 dark:bg-slate-950" />
                     </div>
                 </div>
 
@@ -91,7 +91,7 @@ export function AddCompanyForm() {
                 )}
 
                 <div className="flex justify-end pt-2">
-                    <button type="submit" disabled={isPending} className="inline-flex items-center justify-center gap-2 rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-zinc-50 hover:bg-zinc-900/90 disabled:opacity-50">
+                    <button type="submit" disabled={isPending} className="inline-flex items-center justify-center gap-2 rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50">
                         {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
                         Create Company
                     </button>

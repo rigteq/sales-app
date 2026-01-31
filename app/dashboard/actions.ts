@@ -582,12 +582,36 @@ export async function deleteComment(id: number, leadId?: number) {
     }
 
     const { error } = await supabase.from('comments').update({ is_deleted: true }).eq('id', id)
+    if (error) return { error: 'Failed to delete' }
 
-    // Reset lead schedule time if this was a Scheduled comment
-    if (!error && cm.status === 'Scheduled' && cm.lead_id) {
+    // Revert logic: Find the latest non-deleted comment for this lead
+    if (cm.lead_id) {
+        const { data: latestComment } = await supabase
+            .from('comments')
+            .select('status')
+            .eq('lead_id', cm.lead_id)
+            .eq('is_deleted', false)
+            .not('status', 'is', null) // Only consider comments that actually set a status
+            .order('created_time', { ascending: false })
+            .limit(1)
+            .single()
+
+        const newStatus = latestComment?.status || 'New'
+
+        // Prepare update payload
+        const updatePayload: any = { status: newStatus }
+
+        // If we are reverting to a non-scheduled status, ensure schedule_time is cleared.
+        // If we are reverting TO 'Scheduled', we don't have the old time easily available (unless we parse comment text), 
+        // implies the user should re-schedule or we leave it as is (likely null if previous action cleared it, or whatever).
+        // Safest: If not Scheduled, clear time.
+        if (newStatus !== 'Scheduled') {
+            updatePayload.schedule_time = null
+        }
+
         await supabase
             .from('leads')
-            .update({ schedule_time: null })
+            .update(updatePayload)
             .eq('id', cm.lead_id)
     }
 
@@ -1099,4 +1123,33 @@ export async function getUpcomingScheduledLeads() {
     })
 
     return filteredLeads
+}
+
+export async function sendBroadcastNotification(prevState: any, formData: FormData) {
+    const supabase = await createClient()
+    const userDetails = await getCurrentUserFullDetails()
+
+    if (!userDetails || userDetails.role !== 2) {
+        return { error: 'Unauthorized', success: false }
+    }
+
+    const title = formData.get('title') as string
+    const message = formData.get('message') as string
+
+    if (!title || !message) {
+        return { error: 'Title and Message are required', success: false }
+    }
+
+    const { error } = await supabase.from('broadcast_notifications').insert({
+        title,
+        message,
+        created_by_email_id: userDetails.user.email
+    })
+
+    if (error) {
+        console.error('Broadcast Error', error)
+        return { error: 'Failed to send notification', success: false }
+    }
+
+    return { success: true, message: 'Notification broadcasted successfully' }
 }

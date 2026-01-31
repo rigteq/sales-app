@@ -41,11 +41,11 @@ export function CompanyView({ company, stats, leads }: { company: Company, stats
     return (
         <div className="space-y-8">
             {/* Header / Info */}
-            <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
                 <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
                     <div>
-                        <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-50">{company.companyname}</h1>
-                        <div className="mt-2 space-y-1 text-sm text-zinc-500 dark:text-zinc-400">
+                        <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-50">{company.companyname}</h1>
+                        <div className="mt-2 space-y-1 text-sm text-slate-500 dark:text-slate-400">
                             {company.companyemail && (
                                 <div className="flex items-center gap-2">
                                     <Mail className="h-4 w-4" />
@@ -60,7 +60,7 @@ export function CompanyView({ company, stats, leads }: { company: Company, stats
                             )}
                         </div>
                         {company.companydetails && (
-                            <p className="mt-4 max-w-2xl text-sm text-zinc-600 dark:text-zinc-300">
+                            <p className="mt-4 max-w-2xl text-sm text-slate-600 dark:text-slate-300">
                                 {company.companydetails}
                             </p>
                         )}
@@ -69,21 +69,21 @@ export function CompanyView({ company, stats, leads }: { company: Company, stats
                     <div className="flex flex-wrap gap-2">
                         <Link
                             href={`/dashboard/users?companyId=${company.id}&role=1`}
-                            className="inline-flex items-center gap-2 rounded-md border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-50 dark:hover:bg-zinc-800"
+                            className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-900 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50 dark:hover:bg-slate-800"
                         >
                             <Shield className="h-4 w-4" />
                             View Admins
                         </Link>
                         <Link
                             href={`/dashboard/users?companyId=${company.id}&role=0`}
-                            className="inline-flex items-center gap-2 rounded-md border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-50 dark:hover:bg-zinc-800"
+                            className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-900 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50 dark:hover:bg-slate-800"
                         >
                             <Users className="h-4 w-4" />
                             View Users
                         </Link>
                         <button
                             onClick={() => setIsEditing(true)}
-                            className="inline-flex items-center gap-2 rounded-md border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-50 dark:hover:bg-zinc-800"
+                            className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-900 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50 dark:hover:bg-slate-800"
                         >
                             <Pencil className="h-4 w-4" />
                             Edit
@@ -101,39 +101,39 @@ export function CompanyView({ company, stats, leads }: { company: Company, stats
 
             {/* Insights */}
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-                    <div className="flex items-center gap-2 text-sm font-medium text-zinc-500 dark:text-zinc-400">
+                <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                    <div className="flex items-center gap-2 text-sm font-medium text-slate-500 dark:text-slate-400">
                         <FileText className="h-4 w-4" />
                         Total Leads
                     </div>
-                    <div className="mt-2 text-2xl font-bold text-zinc-900 dark:text-zinc-50">{stats.totalLeads}</div>
+                    <div className="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-50">{stats.totalLeads}</div>
                 </div>
-                <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-                    <div className="flex items-center gap-2 text-sm font-medium text-zinc-500 dark:text-zinc-400">
+                <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                    <div className="flex items-center gap-2 text-sm font-medium text-slate-500 dark:text-slate-400">
                         <Shield className="h-4 w-4" />
                         Total Admins
                     </div>
-                    <div className="mt-2 text-2xl font-bold text-zinc-900 dark:text-zinc-50">{stats.totalAdmins}</div>
+                    <div className="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-50">{stats.totalAdmins}</div>
                 </div>
-                <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-                    <div className="flex items-center gap-2 text-sm font-medium text-zinc-500 dark:text-zinc-400">
+                <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                    <div className="flex items-center gap-2 text-sm font-medium text-slate-500 dark:text-slate-400">
                         <Users className="h-4 w-4" />
                         Total Users
                     </div>
-                    <div className="mt-2 text-2xl font-bold text-zinc-900 dark:text-zinc-50">{stats.totalUsers}</div>
+                    <div className="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-50">{stats.totalUsers}</div>
                 </div>
-                <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-                    <div className="flex items-center gap-2 text-sm font-medium text-zinc-500 dark:text-zinc-400">
+                <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                    <div className="flex items-center gap-2 text-sm font-medium text-slate-500 dark:text-slate-400">
                         <CheckCircle2 className="h-4 w-4" />
                         Total POs
                     </div>
-                    <div className="mt-2 text-2xl font-bold text-zinc-900 dark:text-zinc-50">{stats.totalPOs}</div>
+                    <div className="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-50">{stats.totalPOs}</div>
                 </div>
             </div>
 
             {/* Leads List */}
             <div className="space-y-4">
-                <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-50">Company Leads</h2>
+                <h2 className="text-xl font-bold text-slate-900 dark:text-slate-50">Company Leads</h2>
                 <LeadsTable leads={leads} />
             </div>
         </div>

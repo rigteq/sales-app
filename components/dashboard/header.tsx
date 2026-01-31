@@ -4,7 +4,7 @@
 import Link from 'next/link'
 import { useState, useRef, useEffect } from 'react'
 import { signOut } from '@/app/auth/actions'
-import { User, LogOut, ChevronDown, Building2, Users, FileText, MessageSquare } from 'lucide-react'
+import { User, LogOut, ChevronDown, Building2, Users, FileText, MessageSquare, Bell } from 'lucide-react'
 
 type UserRole = 0 | 1 | 2
 
@@ -172,6 +172,16 @@ export function Header({ userName, role = 0 }: { userName?: string, role?: numbe
                                     <MessageSquare className="h-4 w-4" />
                                     Custom Message
                                 </Link>
+                                {role === 2 && (
+                                    <Link
+                                        href="/dashboard/notify"
+                                        className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-950/50"
+                                        onClick={() => setIsProfileOpen(false)}
+                                    >
+                                        <Bell className="h-4 w-4" />
+                                        Notify Users
+                                    </Link>
+                                )}
                                 <form action={signOut}>
                                     <button
                                         type="submit"
@@ -195,25 +205,28 @@ export function Header({ userName, role = 0 }: { userName?: string, role?: numbe
             {/* Mobile Nav Menu */}
             {
                 isMobileMenuOpen && (
-                    <div className="md:hidden border-t border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-4 py-4 space-y-4">
+                    <div className="md:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-4 py-4 space-y-4 shadow-lg">
                         {/* Simplified Mobile Menu */}
-                        <Link href="/dashboard/leads" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-medium">All Leads</Link>
-                        <Link href="/dashboard/my-leads" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-medium">My Leads</Link>
-                        <Link href="/dashboard/assigned-leads" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-medium">Assigned Leads</Link>
+                        <Link href="/dashboard/leads" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-medium text-slate-700 hover:text-indigo-600 dark:text-slate-300 dark:hover:text-indigo-400">All Leads</Link>
+                        <Link href="/dashboard/my-leads" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-medium text-slate-700 hover:text-indigo-600 dark:text-slate-300 dark:hover:text-indigo-400">My Leads</Link>
+                        <Link href="/dashboard/assigned-leads" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-medium text-slate-700 hover:text-indigo-600 dark:text-slate-300 dark:hover:text-indigo-400">Assigned Leads</Link>
+                        <Link href="/dashboard/scheduled-leads" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-medium text-slate-700 hover:text-indigo-600 dark:text-slate-300 dark:hover:text-indigo-400">Scheduled Leads</Link>
 
                         {role !== 0 && (
-                            <Link href="/dashboard/comments" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-medium">All Comments</Link>
+                            <Link href="/dashboard/comments" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-medium text-slate-700 hover:text-indigo-600 dark:text-slate-300 dark:hover:text-indigo-400">All Comments</Link>
                         )}
-                        <Link href="/dashboard/my-comments" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-medium">My Comments</Link>
+                        <Link href="/dashboard/my-comments" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-medium text-slate-700 hover:text-indigo-600 dark:text-slate-300 dark:hover:text-indigo-400">My Comments</Link>
+
+                        <Link href="/dashboard/pos" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-medium text-slate-700 hover:text-indigo-600 dark:text-slate-300 dark:hover:text-indigo-400">Purchase Orders (PO)</Link>
 
                         {role !== 0 && (
-                            <Link href="/dashboard/users" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-medium">Users</Link>
+                            <Link href="/dashboard/users" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-medium text-slate-700 hover:text-indigo-600 dark:text-slate-300 dark:hover:text-indigo-400">Users</Link>
                         )}
                         {role === 2 && (
-                            <Link href="/dashboard/users?filter=admins" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-medium">Admins</Link>
+                            <Link href="/dashboard/users?filter=admins" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-medium text-slate-700 hover:text-indigo-600 dark:text-slate-300 dark:hover:text-indigo-400">Admins</Link>
                         )}
                         {role === 2 && (
-                            <Link href="/dashboard/companies" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-medium text-zinc-900 dark:text-zinc-50">Companies</Link>
+                            <Link href="/dashboard/companies" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-medium text-slate-700 hover:text-indigo-600 dark:text-slate-300 dark:hover:text-indigo-400">Companies</Link>
                         )}
 
                         {/* Insights is available in Profile Dropdown */}

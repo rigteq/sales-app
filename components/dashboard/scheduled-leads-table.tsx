@@ -32,44 +32,44 @@ export function ScheduledLeadsTable({ leads }: { leads: Lead[] }) {
     return (
         <div className="mt-6 flow-root overflow-x-auto">
             <div className="inline-block min-w-full align-middle">
-                <div className="rounded-lg bg-white p-2 md:pt-0 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
-                    <table className="min-w-full text-zinc-900">
-                        <thead className="text-left text-sm font-normal">
+                <div className="rounded-xl bg-white p-2 md:pt-0 dark:bg-slate-900 border border-slate-200 shadow-sm dark:border-slate-800">
+                    <table className="min-w-full text-slate-900">
+                        <thead className="text-left text-sm font-normal bg-slate-50/50 dark:bg-slate-900/50">
                             <tr>
-                                <th scope="col" className="px-4 py-5 font-medium sm:pl-6 dark:text-zinc-200">
+                                <th scope="col" className="px-4 py-5 font-medium sm:pl-6 text-slate-500 dark:text-slate-400">
                                     Name
                                 </th>
-                                <th scope="col" className="px-3 py-5 font-medium dark:text-zinc-200">
+                                <th scope="col" className="px-3 py-5 font-medium text-slate-500 dark:text-slate-400">
                                     Contact
                                 </th>
-                                <th scope="col" className="px-3 py-5 font-medium dark:text-zinc-200">
+                                <th scope="col" className="px-3 py-5 font-medium text-slate-500 dark:text-slate-400">
                                     Schedule Time
                                 </th>
-                                <th scope="col" className="px-3 py-5 font-medium dark:text-zinc-200">
+                                <th scope="col" className="px-3 py-5 font-medium text-slate-500 dark:text-slate-400">
                                     Last Updated
                                 </th>
                             </tr>
                         </thead>
-                        <tbody className="bg-white dark:bg-zinc-900">
+                        <tbody className="bg-white dark:bg-slate-900">
                             {leads.map((lead) => (
                                 <tr
                                     key={lead.id}
                                     onClick={() => handleRowClick(lead.id)}
-                                    className={`w-full border-b border-zinc-100 py-3 text-sm last-of-type:border-none hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50 cursor-pointer transition-colors ${loadingId === lead.id ? 'opacity-75 cursor-wait' : ''}`}
+                                    className={`w-full border-b border-slate-100 py-3 text-sm last-of-type:border-none hover:bg-indigo-50/30 dark:border-slate-800 dark:hover:bg-slate-800/50 cursor-pointer transition-colors ${loadingId === lead.id ? 'opacity-75 cursor-wait' : ''}`}
                                 >
                                     <td className="whitespace-nowrap py-3 pl-6 pr-3">
                                         <div className="flex items-center gap-2">
-                                            <p className="font-medium text-zinc-900 dark:text-zinc-100">{lead.lead_name}</p>
-                                            {loadingId === lead.id && <Loader2 className="h-3 w-3 animate-spin text-zinc-500" />}
+                                            <p className="font-medium text-slate-900 dark:text-slate-100">{lead.lead_name}</p>
+                                            {loadingId === lead.id && <Loader2 className="h-3 w-3 animate-spin text-slate-500" />}
                                         </div>
                                     </td>
                                     <td className="whitespace-nowrap px-3 py-3">
                                         <div className="flex flex-col text-xs">
-                                            <span className="text-zinc-900 dark:text-zinc-100">{lead.phone}</span>
-                                            <span className="text-zinc-500 dark:text-zinc-400">{lead.email}</span>
+                                            <span className="text-slate-900 dark:text-slate-100">{lead.phone}</span>
+                                            <span className="text-slate-500 dark:text-slate-400">{lead.email}</span>
                                         </div>
                                     </td>
-                                    <td className="whitespace-nowrap px-3 py-3 font-medium text-zinc-900 dark:text-zinc-100">
+                                    <td className="whitespace-nowrap px-3 py-3 font-medium text-indigo-600 dark:text-indigo-400">
                                         {lead.schedule_time ? new Date(lead.schedule_time).toLocaleString(undefined, {
                                             weekday: 'short',
                                             year: 'numeric',
@@ -79,7 +79,7 @@ export function ScheduledLeadsTable({ leads }: { leads: Lead[] }) {
                                             minute: '2-digit'
                                         }) : '-'}
                                     </td>
-                                    <td className="whitespace-nowrap px-3 py-3 text-zinc-500 dark:text-zinc-400">
+                                    <td className="whitespace-nowrap px-3 py-3 text-slate-500 dark:text-slate-400">
                                         {new Date(lead.last_edited_time).toLocaleString()}
                                     </td>
                                 </tr>

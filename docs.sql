@@ -227,3 +227,27 @@ ALTER TABLE public.po_data ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Enable read/write for authenticated users" ON public.po_data
     FOR ALL TO authenticated USING (true);
+
+-- 11. Broadcast Notifications Table
+CREATE TABLE IF NOT EXISTS public.broadcast_notifications (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    title TEXT NOT NULL,
+    message TEXT NOT NULL,
+    created_by_email_id TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- RLS for Broadcast Notifications
+ALTER TABLE public.broadcast_notifications ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Enable read for all authenticated users" ON public.broadcast_notifications
+    FOR SELECT TO authenticated USING (true);
+
+CREATE POLICY "Enable insert for Superadmins" ON public.broadcast_notifications
+    FOR INSERT TO authenticated WITH CHECK (
+        EXISTS (
+            SELECT 1 FROM public.profiles 
+            WHERE profiles.id = auth.uid() 
+            AND profiles.role_id = 2
+        )
+    );

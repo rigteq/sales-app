@@ -50,12 +50,12 @@ export function AddUserForm() {
     }, [state, addToast])
 
     return (
-        <div className="w-full rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-            <div className="border-b border-zinc-200 p-6 dark:border-zinc-800">
-                <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+        <div className="w-full rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-950">
+            <div className="border-b border-slate-200 p-6 dark:border-slate-800">
+                <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">
                     Add New User
                 </h2>
-                <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                     Create a new account for a team member.
                 </p>
             </div>
@@ -64,38 +64,38 @@ export function AddUserForm() {
                 <div className="grid gap-6 sm:grid-cols-2">
                     {/* Name */}
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-zinc-900 dark:text-zinc-100">Full Name *</label>
-                        <input name="name" type="text" required placeholder="Jane Doe" className="flex h-10 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:border-zinc-800 dark:bg-zinc-950" />
+                        <label className="text-sm font-medium text-slate-900 dark:text-slate-100">Full Name *</label>
+                        <input name="name" type="text" required placeholder="Jane Doe" className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 dark:border-slate-800 dark:bg-slate-950" />
                     </div>
 
                     {/* Email */}
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-zinc-900 dark:text-zinc-100">Email *</label>
-                        <input name="email" type="email" required placeholder="jane@example.com" className="flex h-10 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:border-zinc-800 dark:bg-zinc-950" />
+                        <label className="text-sm font-medium text-slate-900 dark:text-slate-100">Email *</label>
+                        <input name="email" type="email" required placeholder="jane@example.com" className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 dark:border-slate-800 dark:bg-slate-950" />
                     </div>
 
                     {/* Phone */}
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-zinc-900 dark:text-zinc-100">Phone *</label>
-                        <input name="phone" type="tel" required placeholder="10 Digits" className="flex h-10 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:border-zinc-800 dark:bg-zinc-950" />
+                        <label className="text-sm font-medium text-slate-900 dark:text-slate-100">Phone *</label>
+                        <input name="phone" type="tel" required placeholder="10 Digits" className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 dark:border-slate-800 dark:bg-slate-950" />
                     </div>
 
                     {/* Password */}
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-zinc-900 dark:text-zinc-100">Password *</label>
-                        <input name="password" type="password" required placeholder="******" className="flex h-10 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:border-zinc-800 dark:bg-zinc-950" />
+                        <label className="text-sm font-medium text-slate-900 dark:text-slate-100">Password *</label>
+                        <input name="password" type="password" required placeholder="******" className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 dark:border-slate-800 dark:bg-slate-950" />
                     </div>
 
                     {/* Address */}
                     <div className="space-y-2 sm:col-span-2">
-                        <label className="text-sm font-medium text-zinc-900 dark:text-zinc-100">Address</label>
-                        <textarea name="address" rows={2} placeholder="123 Main St, City, Country" className="flex w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:border-zinc-800 dark:bg-zinc-950" />
+                        <label className="text-sm font-medium text-slate-900 dark:text-slate-100">Address</label>
+                        <textarea name="address" rows={2} placeholder="123 Main St, City, Country" className="flex w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 dark:border-slate-800 dark:bg-slate-950" />
                     </div>
 
                     {/* Gender */}
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-zinc-900 dark:text-zinc-100">Gender</label>
-                        <select name="gender" className="flex h-10 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:border-zinc-800 dark:bg-zinc-950">
+                        <label className="text-sm font-medium text-slate-900 dark:text-slate-100">Gender</label>
+                        <select name="gender" className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 dark:border-slate-800 dark:bg-slate-950">
                             <option value="Male">Male</option>
                             <option value="Female">Female</option>
                             <option value="Other">Other</option>
@@ -105,11 +105,11 @@ export function AddUserForm() {
                     {/* Role - Only visible to Superadmin */}
                     {currentUserRole === 2 ? (
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-zinc-900 dark:text-zinc-100">Role</label>
+                            <label className="text-sm font-medium text-slate-900 dark:text-slate-100">Role</label>
                             <select
                                 name="role"
                                 onChange={(e) => setRole(Number(e.target.value))}
-                                className="flex h-10 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:border-zinc-800 dark:bg-zinc-950"
+                                className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 dark:border-slate-800 dark:bg-slate-950"
                             >
                                 <option value="0">User</option>
                                 <option value="1">Admin</option>
@@ -122,8 +122,8 @@ export function AddUserForm() {
                     {/* Company (Superadmin Only) */}
                     {currentUserRole === 2 && (
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-zinc-900 dark:text-zinc-100">Company</label>
-                            <select name="companyId" className="flex h-10 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:border-zinc-800 dark:bg-zinc-950">
+                            <label className="text-sm font-medium text-slate-900 dark:text-slate-100">Company</label>
+                            <select name="companyId" className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 dark:border-slate-800 dark:bg-slate-950">
                                 {companies.map((c: any) => (
                                     <option key={c.id} value={c.id}>{c.companyname}</option>
                                 ))}
@@ -135,7 +135,7 @@ export function AddUserForm() {
 
 
                 <div className="flex justify-end pt-2">
-                    <button type="submit" disabled={isPending} className="inline-flex items-center justify-center gap-2 rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-zinc-50 hover:bg-zinc-900/90 disabled:opacity-50">
+                    <button type="submit" disabled={isPending} className="inline-flex items-center justify-center gap-2 rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50">
                         {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
                         {role === 1 ? 'Create Admin' : 'Create User'}
                     </button>

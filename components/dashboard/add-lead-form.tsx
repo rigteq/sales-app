@@ -71,9 +71,9 @@ export function AddLeadForm() {
     }
 
     return (
-        <div className="w-full rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-            <div className="border-b border-zinc-200 p-6 dark:border-zinc-800">
-                <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+        <div className="w-full rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-950">
+            <div className="border-b border-slate-200 p-6 dark:border-slate-800">
+                <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">
                     Add New Lead
                 </h2>
                 <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
@@ -94,7 +94,7 @@ export function AddLeadForm() {
                             type="text"
                             required
                             placeholder="John Doe"
-                            className="flex h-10 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:border-zinc-800 dark:bg-zinc-950 dark:placeholder:text-zinc-400 dark:focus-visible:ring-zinc-300"
+                            className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 dark:border-slate-800 dark:bg-slate-950 dark:placeholder:text-slate-400 dark:focus-visible:ring-indigo-500"
                         />
                     </div>
 
@@ -109,7 +109,7 @@ export function AddLeadForm() {
                             type="tel"
                             pattern="[0-9]{10}"
                             placeholder="1234567890"
-                            className="flex h-10 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:border-zinc-800 dark:bg-zinc-950 dark:placeholder:text-zinc-400 dark:focus-visible:ring-zinc-300"
+                            className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 dark:border-slate-800 dark:bg-slate-950 dark:placeholder:text-slate-400 dark:focus-visible:ring-indigo-500"
                         />
                         <p className="text-xs text-zinc-500">Must be exactly 10 digits.</p>
                     </div>
@@ -124,7 +124,7 @@ export function AddLeadForm() {
                             name="secondaryPhone"
                             type="tel"
                             placeholder="Landline or other"
-                            className="flex h-10 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:border-zinc-800 dark:bg-zinc-950 dark:placeholder:text-zinc-400 dark:focus-visible:ring-zinc-300"
+                            className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 dark:border-slate-800 dark:bg-slate-950 dark:placeholder:text-slate-400 dark:focus-visible:ring-indigo-500"
                         />
                     </div>
 
@@ -138,7 +138,7 @@ export function AddLeadForm() {
                             name="email"
                             type="email"
                             placeholder="john@example.com"
-                            className="flex h-10 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:border-zinc-800 dark:bg-zinc-950 dark:placeholder:text-zinc-400 dark:focus-visible:ring-zinc-300"
+                            className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 dark:border-slate-800 dark:bg-slate-950 dark:placeholder:text-slate-400 dark:focus-visible:ring-indigo-500"
                         />
                     </div>
 
@@ -152,7 +152,7 @@ export function AddLeadForm() {
                             name="location"
                             type="text"
                             placeholder="City, Country"
-                            className="flex h-10 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:border-zinc-800 dark:bg-zinc-950 dark:placeholder:text-zinc-400 dark:focus-visible:ring-zinc-300"
+                            className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 dark:border-slate-800 dark:bg-slate-950 dark:placeholder:text-slate-400 dark:focus-visible:ring-indigo-500"
                         />
                     </div>
 
@@ -179,7 +179,7 @@ export function AddLeadForm() {
                                         setUtcScheduleTime(now.toISOString())
                                     }
                                 }}
-                                className="flex h-10 w-full appearance-none rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:border-zinc-800 dark:bg-zinc-950 dark:focus-visible:ring-zinc-300"
+                                className="flex h-10 w-full appearance-none rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 dark:border-slate-800 dark:bg-slate-950 dark:focus-visible:ring-indigo-500"
                             >
                                 {statusOptions.map((status) => (
                                     <option key={status} value={status}>
@@ -208,7 +208,7 @@ export function AddLeadForm() {
                                 required
                                 value={localScheduleTime}
                                 onChange={handleScheduleTimeChange}
-                                className="flex h-10 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:border-zinc-800 dark:bg-zinc-950 dark:placeholder:text-zinc-400 dark:focus-visible:ring-zinc-300"
+                                className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 dark:border-slate-800 dark:bg-slate-950 dark:placeholder:text-slate-400 dark:focus-visible:ring-indigo-500"
                             />
                             {/* Hidden Input - UTC Time sent to server */}
                             <input type="hidden" name="scheduleTime" value={utcScheduleTime} />
@@ -229,7 +229,7 @@ export function AddLeadForm() {
                                 name="assignedTo"
                                 defaultValue={currentUserEmail || ''}
                                 key={currentUserEmail} // Force re-render when email loads
-                                className="flex h-10 w-full appearance-none rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:border-zinc-800 dark:bg-zinc-950 dark:focus-visible:ring-zinc-300"
+                                className="flex h-10 w-full appearance-none rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 dark:border-slate-800 dark:bg-slate-950 dark:focus-visible:ring-indigo-500"
                             >
                                 {assignableUsers.map((u) => (
                                     <option key={u.email} value={u.email}>
@@ -257,7 +257,7 @@ export function AddLeadForm() {
                         name="note"
                         rows={3}
                         placeholder="Add any additional details here..."
-                        className="flex w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:border-zinc-800 dark:bg-zinc-950 dark:placeholder:text-zinc-400 dark:focus-visible:ring-zinc-300"
+                        className="flex w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 dark:border-slate-800 dark:bg-slate-950 dark:placeholder:text-slate-400 dark:focus-visible:ring-indigo-500"
                     />
                 </div>
 
@@ -266,7 +266,7 @@ export function AddLeadForm() {
                     <button
                         type="submit"
                         disabled={isPending}
-                        className="inline-flex items-center justify-center gap-2 rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-zinc-50 shadow transition-colors hover:bg-zinc-900/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 disabled:pointer-events-none disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-50/90 dark:focus-visible:ring-zinc-300"
+                        className="inline-flex items-center justify-center gap-2 rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow transition-colors hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-600 disabled:pointer-events-none disabled:opacity-50 dark:bg-indigo-50 dark:text-indigo-900 dark:hover:bg-indigo-100 dark:focus-visible:ring-indigo-300"
                     >
                         {isPending ? (
                             <>
