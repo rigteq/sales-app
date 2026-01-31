@@ -23,7 +23,7 @@ export default async function LeadsPage({
     const filter = searchParamsValue?.filter
 
     const { leads, count } = await getLeads(currentPage, query, { status, filter })
-    const totalPages = Math.ceil(count / 10)
+    const totalPages = Math.ceil(count / 50)
 
     return (
         <div className="w-full">

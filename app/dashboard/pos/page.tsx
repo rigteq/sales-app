@@ -54,7 +54,7 @@ export default async function POsPage({
     // Fetch Data
     const { pos, count } = await getPOs(currentPage)
 
-    const totalPages = Math.ceil(count / 10)
+    const totalPages = Math.ceil(count / 50)
 
     return (
         <div className="w-full space-y-8">

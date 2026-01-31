@@ -19,7 +19,7 @@ export default async function CompaniesPage({
     const currentPage = Number(searchParamsValue?.page) || 1
 
     const { companies, count } = await getCompanies(currentPage, query)
-    const totalPages = Math.ceil(count / 10)
+    const totalPages = Math.ceil(count / 50)
 
     return (
         <div className="w-full">

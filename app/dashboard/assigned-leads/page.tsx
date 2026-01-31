@@ -19,7 +19,7 @@ export default async function AssignedLeadsPage({
     const currentPage = Number(searchParamsValue?.page) || 1
 
     const { leads, count } = await getLeads(currentPage, query, { assignedOnly: true })
-    const totalPages = Math.ceil(count / 10)
+    const totalPages = Math.ceil(count / 50)
 
     return (
         <div className="w-full">

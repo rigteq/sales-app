@@ -2,10 +2,11 @@ import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import { getLeads } from '@/app/dashboard/actions'
 import { ScheduledLeadsTable } from '@/components/dashboard/scheduled-leads-table'
+import { Pagination } from '@/components/ui/pagination'
 
 export default async function ScheduledLeadsPage({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
     const resolvedSearchParams = await searchParams
-    const page = resolvedSearchParams.page ? parseInt(resolvedSearchParams.page as string) : 1
+    const currentPage = resolvedSearchParams.page ? parseInt(resolvedSearchParams.page as string) : 1
 
     // Check Auth
     const supabase = await createClient()
@@ -23,7 +24,8 @@ export default async function ScheduledLeadsPage({ searchParams }: { searchParam
         filters.scope = 'mine_or_assigned'
     }
 
-    const { leads } = await getLeads(page, '', filters)
+    const { leads, count } = await getLeads(currentPage, '', filters)
+    const totalPages = Math.ceil(count / 50)
 
     return (
         <div className="max-w-7xl mx-auto space-y-8">
@@ -33,6 +35,10 @@ export default async function ScheduledLeadsPage({ searchParams }: { searchParam
             </div>
 
             <ScheduledLeadsTable leads={leads || []} />
+
+            <div className="flex w-full justify-center">
+                <Pagination totalPages={totalPages} />
+            </div>
         </div>
     )
 }

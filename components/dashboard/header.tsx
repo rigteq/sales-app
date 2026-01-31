@@ -50,11 +50,31 @@ export function Header({ userName, role = 0 }: { userName?: string, role?: numbe
         </div>
     )
 
+    // Mobile Dropdown Component
+    const [activeMobileDropdown, setActiveMobileDropdown] = useState<string | null>(null)
+
+    const MobileNavDropdown = ({ title, children, id }: { title: string, children: React.ReactNode, id: string }) => (
+        <div className="border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden">
+            <button
+                onClick={() => setActiveMobileDropdown(activeMobileDropdown === id ? null : id)}
+                className="flex w-full items-center justify-between px-3 py-2 text-left text-sm font-medium text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-900/50"
+            >
+                {title}
+                <ChevronDown className={`h-4 w-4 text-slate-500 transition-transform ${activeMobileDropdown === id ? 'rotate-180' : ''}`} />
+            </button>
+            {activeMobileDropdown === id && (
+                <div className="bg-white dark:bg-slate-950 px-2 py-2 space-y-1 border-t border-slate-100 dark:border-slate-800">
+                    {children}
+                </div>
+            )}
+        </div>
+    )
+
     return (
-        <header className="sticky top-0 z-40 w-full border-b border-slate-200/50 bg-white/80 backdrop-blur-md dark:border-slate-800 dark:bg-slate-950/80">
+        <header className="sticky top-0 z-50 w-full border-b border-slate-200/50 bg-white/80 backdrop-blur-md dark:border-slate-800 dark:bg-slate-950/80">
             <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center gap-4 md:gap-8">
-                    {/* Mobile Menu Button */}
+                    {/* Mobile Menu Button - Toggle */}
                     <button
                         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                         className="md:hidden p-2 text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-slate-50 transition-colors"
@@ -66,7 +86,7 @@ export function Header({ userName, role = 0 }: { userName?: string, role?: numbe
 
                     <Link
                         href="/dashboard"
-                        onClick={() => setHasNewBroadcast(false)}
+                        onClick={() => { setHasNewBroadcast(false); setIsMobileMenuOpen(false) }}
                         className="flex items-center gap-2 font-bold text-xl text-slate-900 dark:text-slate-50 group relative"
                     >
                         <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30 transition-transform group-hover:scale-105">
@@ -83,7 +103,6 @@ export function Header({ userName, role = 0 }: { userName?: string, role?: numbe
 
                     {/* Desktop Nav */}
                     <nav ref={dropdownRef} className="hidden md:flex items-center gap-6 text-sm font-medium">
-
                         {/* LEADS DROPDOWN */}
                         <NavDropdown title="Leads" id="leads">
                             <Link onClick={() => setActiveDropdown(null)} href="/dashboard/leads" className="block px-2 py-1.5 text-sm rounded-sm hover:bg-slate-100 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-300">
@@ -143,7 +162,6 @@ export function Header({ userName, role = 0 }: { userName?: string, role?: numbe
                                 Companies
                             </Link>
                         )}
-
                     </nav>
                 </div>
 
@@ -222,45 +240,56 @@ export function Header({ userName, role = 0 }: { userName?: string, role?: numbe
             {isMobileMenuOpen && (
                 <>
                     <div
-                        className="fixed inset-0 z-30 bg-black/20 md:hidden"
+                        className="fixed inset-0 z-40 bg-black/20 md:hidden"
                         onClick={() => setIsMobileMenuOpen(false)}
                     />
-                    <div className="absolute top-16 left-0 z-40 w-full border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-4 py-4 space-y-4 shadow-lg md:hidden animate-in slide-in-from-top-2 duration-200">
+                    <div className="absolute top-16 left-0 z-50 w-full border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-4 py-4 space-y-4 shadow-xl md:hidden animate-in slide-in-from-top-2 duration-200 h-[calc(100vh-64px)] overflow-y-auto">
 
-                        <div className="space-y-1">
-                            <p className="px-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">Leads</p>
-                            <Link href="/dashboard/leads" onClick={() => setIsMobileMenuOpen(false)} className="block rounded-md px-2 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-indigo-400">All Leads</Link>
-                            <Link href="/dashboard/my-leads" onClick={() => setIsMobileMenuOpen(false)} className="block rounded-md px-2 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-indigo-400">My Leads</Link>
-                            <Link href="/dashboard/assigned-leads" onClick={() => setIsMobileMenuOpen(false)} className="block rounded-md px-2 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-indigo-400">Assigned Leads</Link>
-                            <Link href="/dashboard/scheduled-leads" onClick={() => setIsMobileMenuOpen(false)} className="block rounded-md px-2 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-indigo-400">Scheduled Leads</Link>
-                        </div>
+                        {/* Leads Group */}
+                        <MobileNavDropdown title="Leads" id="m-leads">
+                            <Link href="/dashboard/leads" onClick={() => setIsMobileMenuOpen(false)} className="block rounded-md px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-indigo-400">All Leads</Link>
+                            <Link href="/dashboard/my-leads" onClick={() => setIsMobileMenuOpen(false)} className="block rounded-md px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-indigo-400">My Leads</Link>
+                            <Link href="/dashboard/assigned-leads" onClick={() => setIsMobileMenuOpen(false)} className="block rounded-md px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-indigo-400">Assigned Leads</Link>
+                            <Link href="/dashboard/scheduled-leads" onClick={() => setIsMobileMenuOpen(false)} className="block rounded-md px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-indigo-400">Scheduled Leads</Link>
+                        </MobileNavDropdown>
 
-                        {(role !== 0) && (
-                            <div className="space-y-1">
-                                <p className="px-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">Comments</p>
-                                <Link href="/dashboard/comments" onClick={() => setIsMobileMenuOpen(false)} className="block rounded-md px-2 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-indigo-400">All Comments</Link>
-                                <Link href="/dashboard/my-comments" onClick={() => setIsMobileMenuOpen(false)} className="block rounded-md px-2 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-indigo-400">My Comments</Link>
-                            </div>
+                        {/* Comments Group */}
+                        {role !== 0 ? (
+                            <MobileNavDropdown title="Comments" id="m-comments">
+                                <Link href="/dashboard/comments" onClick={() => setIsMobileMenuOpen(false)} className="block rounded-md px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-indigo-400">All Comments</Link>
+                                <Link href="/dashboard/my-comments" onClick={() => setIsMobileMenuOpen(false)} className="block rounded-md px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-indigo-400">My Comments</Link>
+                            </MobileNavDropdown>
+                        ) : (
+                            <Link href="/dashboard/my-comments" onClick={() => setIsMobileMenuOpen(false)} className="flex w-full items-center justify-between px-3 py-2 text-left text-sm font-medium text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-800">
+                                My Comments
+                            </Link>
                         )}
-                        {role === 0 && (
-                            <Link href="/dashboard/my-comments" onClick={() => setIsMobileMenuOpen(false)} className="block rounded-md px-2 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-indigo-400">My Comments</Link>
-                        )}
 
+                        <Link href="/dashboard/pos" onClick={() => setIsMobileMenuOpen(false)} className="flex w-full items-center justify-between px-3 py-2 text-left text-sm font-medium text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-800">
+                            Purchase Orders
+                        </Link>
 
-                        <Link href="/dashboard/pos" onClick={() => setIsMobileMenuOpen(false)} className="block rounded-md px-2 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-indigo-400">Purchase Orders (PO)</Link>
-
+                        {/* Admin Group */}
                         {(role === 1 || role === 2) && (
-                            <div className="space-y-1">
-                                <p className="px-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">Admin</p>
-                                <Link href="/dashboard/users" onClick={() => setIsMobileMenuOpen(false)} className="block rounded-md px-2 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-indigo-400">Users</Link>
+                            <MobileNavDropdown title="Admin" id="m-admin">
+                                <Link href="/dashboard/users" onClick={() => setIsMobileMenuOpen(false)} className="block rounded-md px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-indigo-400">Users</Link>
                                 {role === 2 && (
                                     <>
-                                        <Link href="/dashboard/users?filter=admins" onClick={() => setIsMobileMenuOpen(false)} className="block rounded-md px-2 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-indigo-400">Admins</Link>
-                                        <Link href="/dashboard/companies" onClick={() => setIsMobileMenuOpen(false)} className="block rounded-md px-2 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-indigo-400">Companies</Link>
+                                        <Link href="/dashboard/users?filter=admins" onClick={() => setIsMobileMenuOpen(false)} className="block rounded-md px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-indigo-400">Admins</Link>
+                                        <Link href="/dashboard/companies" onClick={() => setIsMobileMenuOpen(false)} className="block rounded-md px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-indigo-400">Companies</Link>
                                     </>
                                 )}
-                            </div>
+                            </MobileNavDropdown>
                         )}
+
+                        <div className="pt-4 border-t border-slate-200 dark:border-slate-800">
+                            <form action={signOut}>
+                                <button type="submit" className="flex w-full items-center justify-center gap-2 rounded-md bg-red-50 py-3 text-sm font-medium text-red-600 dark:bg-red-950/20 dark:text-red-400">
+                                    <LogOut className="h-4 w-4" />
+                                    Logout
+                                </button>
+                            </form>
+                        </div>
                     </div>
                 </>
             )}

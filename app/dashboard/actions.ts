@@ -52,7 +52,7 @@ export async function getPOs(page = 1, search = '') {
     if (!userDetails) return { pos: [], count: 0 }
     const { user, role, profile } = userDetails
 
-    const itemsPerPage = 10
+    const itemsPerPage = 50
     const from = (page - 1) * itemsPerPage
     const to = from + itemsPerPage - 1
 
@@ -197,7 +197,7 @@ export async function getAssignableUsers() {
 
 export async function getCompanies(page = 1, search = '') {
     const supabase = await createClient()
-    const itemsPerPage = 10
+    const itemsPerPage = 50
     const from = (page - 1) * itemsPerPage
     const to = from + itemsPerPage - 1
 
@@ -287,7 +287,7 @@ export async function getLeads(page = 1, search = '', filters: { mineOnly?: bool
     if (!userDetails) return { leads: [], count: 0 }
     const { user, profile, role } = userDetails
 
-    const itemsPerPage = 10
+    const itemsPerPage = 50
     const from = (page - 1) * itemsPerPage
     const to = from + itemsPerPage - 1
 
@@ -468,7 +468,7 @@ export async function getComments(page = 1, search = '', mineOnly = false) {
     if (!userDetails) return { comments: [], count: 0 }
     const { user, profile, role } = userDetails
 
-    const itemsPerPage = 10
+    const itemsPerPage = 50
     const from = (page - 1) * itemsPerPage
     const to = from + itemsPerPage - 1
 

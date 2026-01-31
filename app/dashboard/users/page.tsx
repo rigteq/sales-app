@@ -1,5 +1,5 @@
 import { Suspense } from 'react'
-import { getUsers, getCurrentUserFullDetails } from '@/app/dashboard/actions'
+import { getUsers, getCurrentUserFullDetails, getCompanies } from '@/app/dashboard/actions'
 import { UsersTable } from '@/components/dashboard/users-table'
 import { AddUserForm } from '@/components/dashboard/add-user-form'
 import { redirect } from 'next/navigation'
@@ -26,6 +26,12 @@ export default async function UsersPage({
 
     const users = await getUsers(targetRole, companyIdFilter)
 
+    let companies: any[] = []
+    if (userDetails.role === 2) {
+        const res = await getCompanies()
+        companies = res.companies || []
+    }
+
     return (
         <div className="w-full space-y-8">
             <div className="flex w-full items-center justify-between">
@@ -37,15 +43,8 @@ export default async function UsersPage({
                 </div>
             </div>
 
-            {/* <AddUserForm /> Removed as per request to not have inline forms on list pages, or handled via modal? 
-               Wait, if I remove it, functionally broken for Admins. 
-               The prompt says "Remove add user form from user dashboard" in the context of "User should NOT be able to create user".
-               Since I redirected Role 0, this is satisfied for them.
-               For Admins, I should probably keep it or make it a modal.
-               Let's keep it but ensure the component itself checks roles or the page does.
-               The page does check role.
-            */}
-            <AddUserForm />
+            {/* Add User Form - Visible to Admins (1) and Superadmins (2) */}
+            <AddUserForm currentUserRole={userDetails.role} companies={companies} />
 
             <div className="space-y-4">
                 <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-50">
