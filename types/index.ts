@@ -13,6 +13,7 @@ export type Lead = {
     created_time: string
     last_edited_time: string
     is_deleted: boolean
+    schedule_time: string | null
 }
 
 export type Comment = {

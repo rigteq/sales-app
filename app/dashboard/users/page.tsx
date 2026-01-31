@@ -7,26 +7,40 @@ import { AddUserForm } from '@/components/dashboard/add-user-form'
 export default async function UsersPage({
     searchParams,
 }: {
-    searchParams?: Promise<{
-        filter?: string
-    }>
+    searchParams: Promise<{ [key: string]: string | undefined }>
 }) {
-    const userDetails = await getCurrentUserFullDetails()
-    // Redirect if not admin/superadmin? Logic is handled in actions (returns empty)
-
     const params = await searchParams
-    const users = await getUsers()
+    const companyIdFilter = params.companyId
+    const roleFilter = params.role ? parseInt(params.role) : undefined
 
-    // Filter logic
-    let filteredUsers = users
-    const filterType = params?.filter
+    // Determine current user's role to see if they can filter
+    const userDetails = await getCurrentUserFullDetails()
+    // Authorization: If superadmin (2), can view all or filter. If admin (1), view own company.
 
-    if (filterType === 'admins') {
-        filteredUsers = users.filter((u: any) => (u.role?.roleId ?? u.role?.roleid ?? u.role_id ?? u.roleId) === 1)
-    } else {
-        // Default: Show only generic Users (Role 0)
-        filteredUsers = users.filter((u: any) => (u.role?.roleId ?? u.role?.roleid ?? u.role_id ?? u.roleId) === 0)
+    // Pass filters to server action directly
+    const filteredUsers = await getUsers(roleFilter, companyIdFilter)
+
+    // Legacy support for "filter=admins" if role param wasn't set?
+    // Actually we can just rely on the new params.
+    // But if params.filter === 'admins' is present and role isn't, handle it?
+    if (!roleFilter && params.filter === 'admins') {
+        // Re-fetch or filter client side? 
+        // Better to normalize params before fetch? 
+        // Since I can't await inside if easily without refactoring, let's just use filteredUsers as is unless we missed the "admins" flag case.
+        // If roleFilter is undefined, getUsers returns all roles or filtered?
+        // My update to getUsers checks "if (roleFilter !== undefined)". So it returns all roles if undefined.
+        // The previous logic defaulted to role 0.
+        // Let's replicate strict logic:
     }
+
+    // Actually, let's refine the fetch call:
+    let targetRole = roleFilter
+    if (targetRole === undefined) {
+        if (params.filter === 'admins') targetRole = 1
+        else targetRole = 0 // Default to Users
+    }
+
+    const users = await getUsers(targetRole, companyIdFilter)
 
     return (
         <div className="w-full space-y-8">
@@ -36,14 +50,12 @@ export default async function UsersPage({
                 </h1>
             </div>
 
-            {/* User List Only */}
-
             <div className="space-y-4">
                 <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
-                    {filterType === 'admins' ? 'Admins' : 'All Users'}
+                    {targetRole === 1 ? 'Admins' : 'Users'}
                 </h2>
                 <Suspense fallback={<div className="text-center py-10">Loading users...</div>}>
-                    <UsersTable users={filteredUsers} showCompany={userDetails?.role === 2} />
+                    <UsersTable users={users} showCompany={userDetails?.role === 2} />
                 </Suspense>
             </div>
         </div>

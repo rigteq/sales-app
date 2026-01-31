@@ -5,6 +5,8 @@ import { Footer } from '@/components/dashboard/footer'
 import { createClient } from '@/utils/supabase/server'
 import { getCurrentUserFullDetails } from './actions'
 
+import { ScheduledAlerts } from '@/components/dashboard/scheduled-alerts'
+
 export default async function DashboardLayout({
     children,
 }: {
@@ -16,7 +18,8 @@ export default async function DashboardLayout({
     const companyId = userDetails?.profile?.company_id || null
 
     return (
-        <div className="flex min-h-screen flex-col bg-zinc-50 dark:bg-zinc-950">
+        <div className="flex min-h-screen flex-col bg-slate-50 dark:bg-slate-950">
+            <ScheduledAlerts />
             <Header userName={userName} role={role} />
             <main className="flex-1 container mx-auto px-4 py-8 sm:px-6 lg:px-8">
                 {children}

@@ -1,13 +1,20 @@
-
 'use client'
 
 import { Comment } from '@/types'
 import { addComment, deleteComment } from '@/app/dashboard/actions'
-import { useActionState } from 'react'
+import { useActionState, useState, useRef, useEffect } from 'react'
 import { Loader2, Send, Trash2 } from 'lucide-react'
-import { useRef } from 'react'
+import { useToast } from '@/components/ui/toast'
 
-export function LeadComments({ leadId, comments, currentStatus }: { leadId: number, comments: Comment[], currentStatus: string }) {
+// Helper to strip UTC suffix for display
+function formatCommentText(text: string) {
+    return text.replace(/\(Scheduled: .*? UTC\)/g, '(Scheduled)')
+}
+
+export function LeadComments({ leadId, comments, currentStatus, currentScheduleTime }: { leadId: number, comments: Comment[], currentStatus: string, currentScheduleTime?: string | null }) {
+    // ...
+    // In render loop:
+    // {formatCommentText(comment.comment_text)}
     const initialState = {
         error: undefined,
         success: false,
@@ -16,15 +23,46 @@ export function LeadComments({ leadId, comments, currentStatus }: { leadId: numb
     // @ts-ignore
     const [state, formAction, isPending] = useActionState(addComment, initialState)
     const formRef = useRef<HTMLFormElement>(null)
+    const { addToast } = useToast()
+
+    // State
+    const [selectedStatus, setSelectedStatus] = useState(currentStatus)
+    const [localScheduleTime, setLocalScheduleTime] = useState(() => {
+        if (currentScheduleTime) {
+            // currentScheduleTime is UTC ISO string from server (e.g. 2024-01-31T10:30:00Z)
+            // We want to show this in the local input.
+            // new Date("2024-01-31T10:30:00Z") creates a date object in browser's local timezone.
+            // We extract local year, month, etc.
+            const date = new Date(currentScheduleTime)
+            const pad = (n: number) => n < 10 ? '0' + n : n
+            return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
+        }
+        return ''
+    })
+    const [utcScheduleTime, setUtcScheduleTime] = useState(currentScheduleTime || '')
 
     // Reset form on success
-    if (state?.success && formRef.current) {
-        formRef.current.reset()
-    }
+    useEffect(() => {
+        if (state?.success) {
+            addToast('Comment added successfully')
+            if (formRef.current) formRef.current.reset()
+            // Keep status or reset? "Old comment text if any get reset to new deault text" logic suggests we mostly keep state or rely on form reset. 
+            // Usually we might want to keep status as is or update it if the server returned fetch.
+            // But here we just reset the comment text mainly.
+            // Let's assume we keep the status as whatever it was set to.
+        } else if (state?.error) {
+            addToast(state.error, 'error')
+        }
+    }, [state, addToast])
 
     const handleDelete = async (id: number) => {
         if (confirm('Delete this comment?')) {
-            await deleteComment(id, leadId)
+            const res = await deleteComment(id, leadId)
+            if (res?.success) {
+                addToast('Comment deleted')
+            } else {
+                addToast('Failed to delete comment', 'error')
+            }
         }
     }
 
@@ -46,14 +84,32 @@ export function LeadComments({ leadId, comments, currentStatus }: { leadId: numb
 
     const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const newStatus = e.target.value
-        // If there's a mapped text, update textarea. 
-        // We only overwrite if the textarea is empty or matches another default text?
-        // User said: "Old comment text if any get reset to new deault text" -> So always overwrite.
-        // Wait, "if any get reset" implies overwrite.
+        setSelectedStatus(newStatus)
+
+        // Auto default time for scheduled
+        if (newStatus === 'Scheduled' && !localScheduleTime) {
+            const now = new Date()
+            const pad = (n: number) => n < 10 ? '0' + n : n
+            const localIso = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`
+            setLocalScheduleTime(localIso)
+            setUtcScheduleTime(now.toISOString())
+        }
+
         const defaultText = statusTextMap[newStatus]
         if (defaultText && formRef.current) {
             const textarea = formRef.current.querySelector('textarea')
             if (textarea) textarea.value = defaultText
+        }
+    }
+
+    const handleScheduleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const localValue = e.target.value
+        setLocalScheduleTime(localValue)
+        if (localValue) {
+            const isoString = new Date(localValue).toISOString()
+            setUtcScheduleTime(isoString)
+        } else {
+            setUtcScheduleTime('')
         }
     }
 
@@ -76,16 +132,34 @@ export function LeadComments({ leadId, comments, currentStatus }: { leadId: numb
                                 className="w-full rounded-md border border-zinc-200 bg-white p-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:border-zinc-800 dark:bg-zinc-950"
                             />
                         </div>
-                        <div className="flex flex-col gap-2 min-w-[150px]">
+                        <div className="flex flex-col gap-2 min-w-[200px]">
                             <select
                                 name="status"
-                                key={currentStatus}
-                                defaultValue={currentStatus}
+                                key={currentStatus} // Reset if prop changes? Maybe not needed if state controls it.
+                                value={selectedStatus}
                                 onChange={handleStatusChange}
                                 className="w-full rounded-md border border-zinc-200 bg-white p-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:border-zinc-800 dark:bg-zinc-950"
                             >
                                 {statusOptions.map(s => <option key={s} value={s}>{s}</option>)}
                             </select>
+
+                            {/* Scheduled Time Input - Aligned in this column */}
+                            {selectedStatus === 'Scheduled' && (
+                                <div className="animate-in fade-in slide-in-from-top-2 space-y-1">
+                                    <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">Scheduled Time</label>
+                                    <input
+                                        type="datetime-local"
+                                        required
+                                        value={localScheduleTime}
+                                        onChange={handleScheduleTimeChange}
+                                        className="w-full rounded-md border border-zinc-200 bg-white p-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:border-zinc-800 dark:bg-zinc-950"
+                                    />
+                                    <input type="hidden" name="scheduleTime" value={utcScheduleTime} />
+                                    {/* Send local time text for comment appending */}
+                                    <input type="hidden" name="localScheduleTimeText" value={localScheduleTime ? new Date(localScheduleTime).toLocaleString() : ''} />
+                                </div>
+                            )}
+
                             <button
                                 type="submit"
                                 disabled={isPending}
@@ -96,7 +170,6 @@ export function LeadComments({ leadId, comments, currentStatus }: { leadId: numb
                             </button>
                         </div>
                     </div>
-                    {state?.error && <p className="text-sm text-red-500">{state.error}</p>}
                 </form>
             </div>
 
@@ -119,7 +192,7 @@ export function LeadComments({ leadId, comments, currentStatus }: { leadId: numb
                                         </span>
                                     )}
                                 </div>
-                                <p className="text-sm text-zinc-600 dark:text-zinc-300">{comment.comment_text}</p>
+                                <p className="text-sm text-zinc-600 dark:text-zinc-300">{formatCommentText(comment.comment_text)}</p>
                             </div>
                             <div>
                                 <button

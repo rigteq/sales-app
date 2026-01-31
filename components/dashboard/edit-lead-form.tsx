@@ -1,11 +1,11 @@
-
 'use client'
 
 import { useActionState } from 'react'
 import { updateLead } from '@/app/dashboard/actions'
 import { Lead } from '@/types'
 import { Loader2, Save, X } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useToast } from '@/components/ui/toast'
 
 const statusOptions = [
     'New',
@@ -20,32 +20,50 @@ const statusOptions = [
 
 export function EditLeadForm({ lead, onCancel }: { lead: Lead, onCancel: () => void }) {
     const initialState = {
-        error: undefined,
+        error: undefined as string | undefined,
         success: false,
         message: ''
     }
-    // @ts-ignore - TS strict union check vs async return type
+    // @ts-ignore
     const [state, formAction, isPending] = useActionState(updateLead, initialState)
+    const { addToast } = useToast()
 
-    if (state?.success) {
-        // Could auto-close here, but parent handling is safer via effect if needed.
-        // For now, let's just show success message and a "Close" button? 
-        // Or just reload. The server action revalidates.
-        // Let's call onCancel to go back to view mode if success.
-        // But we need to wait for the state update.
+    // State
+    const [selectedStatus, setSelectedStatus] = useState(lead.status)
+    const [localScheduleTime, setLocalScheduleTime] = useState(() => {
+        if (lead.schedule_time) {
+            const date = new Date(lead.schedule_time)
+            const pad = (n: number) => n < 10 ? '0' + n : n
+            return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
+        }
+        return ''
+    })
+    const [utcScheduleTime, setUtcScheduleTime] = useState(lead.schedule_time || '')
+
+    useEffect(() => {
+        if (state?.success) {
+            addToast('Lead updated successfully')
+            onCancel()
+        } else if (state?.error) {
+            addToast(state.error, 'error')
+        }
+    }, [state, addToast, onCancel])
+
+    const handleScheduleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const localValue = e.target.value
+        setLocalScheduleTime(localValue)
+
+        if (localValue) {
+            const isoString = new Date(localValue).toISOString()
+            setUtcScheduleTime(isoString)
+        } else {
+            setUtcScheduleTime('')
+        }
     }
 
     return (
-        <form action={async (formData) => {
-            await formAction(formData)
-            onCancel() // Optimistic close, or handle properly with effect
-        }} className="space-y-6 rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+        <form action={formAction} className="space-y-6 rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
             <input type="hidden" name="id" value={lead.id} />
-            {state?.error && (
-                <div className="rounded-md bg-red-50 p-3 text-sm text-red-600 dark:bg-red-900/10 dark:text-red-400">
-                    <p>{state.error}</p>
-                </div>
-            )}
 
             <div className="flex items-center justify-between">
                 <h3 className="text-lg font-medium">Edit Lead</h3>
@@ -54,6 +72,7 @@ export function EditLeadForm({ lead, onCancel }: { lead: Lead, onCancel: () => v
                 </button>
             </div>
 
+            {/* Form Fields Grid */}
             <div className="grid gap-6 sm:grid-cols-2">
                 <div className="space-y-2">
                     <label htmlFor="leadName" className="text-sm font-medium">Lead Name *</label>
@@ -107,7 +126,17 @@ export function EditLeadForm({ lead, onCancel }: { lead: Lead, onCancel: () => v
                     <select
                         id="status"
                         name="status"
-                        defaultValue={lead.status}
+                        value={selectedStatus}
+                        onChange={(e) => {
+                            setSelectedStatus(e.target.value)
+                            if (e.target.value === 'Scheduled' && !localScheduleTime) {
+                                const now = new Date()
+                                const pad = (n: number) => n < 10 ? '0' + n : n
+                                const localIso = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`
+                                setLocalScheduleTime(localIso)
+                                setUtcScheduleTime(now.toISOString())
+                            }
+                        }}
                         className="flex h-10 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:border-zinc-800 dark:bg-zinc-950"
                     >
                         {statusOptions.map((s) => (
@@ -115,6 +144,21 @@ export function EditLeadForm({ lead, onCancel }: { lead: Lead, onCancel: () => v
                         ))}
                     </select>
                 </div>
+
+                {selectedStatus === 'Scheduled' && (
+                    <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
+                        <label htmlFor="scheduleTimeInput" className="text-sm font-medium">Scheduled Time *</label>
+                        <input
+                            id="scheduleTimeInput"
+                            type="datetime-local"
+                            required
+                            value={localScheduleTime}
+                            onChange={handleScheduleTimeChange}
+                            className="flex h-10 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:border-zinc-800 dark:bg-zinc-950"
+                        />
+                        <input type="hidden" name="scheduleTime" value={utcScheduleTime} />
+                    </div>
+                )}
 
                 <div className="space-y-2">
                     <label htmlFor="location" className="text-sm font-medium">Location</label>

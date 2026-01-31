@@ -196,4 +196,34 @@ CREATE POLICY "Enable insert/update for Superadmins" ON public.company
         )
     );
 
+-- 8. Add Custom Message to Profiles
+ALTER TABLE public.profiles 
+ADD COLUMN IF NOT EXISTS custom_message TEXT;
 
+-- 9. Add Schedule Time to Leads
+ALTER TABLE public.leads 
+ADD COLUMN IF NOT EXISTS schedule_time TIMESTAMPTZ;
+-- 10. Purchase Order (PO) Data Table
+CREATE TABLE IF NOT EXISTS public.po_data (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    lead_id BIGINT REFERENCES public.leads(id) ON DELETE CASCADE,
+    amount_received DECIMAL(15, 2) DEFAULT 0,
+    amount_remaining DECIMAL(15, 2) DEFAULT 0,
+    release_date TIMESTAMPTZ,
+    note TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    last_edited_at TIMESTAMPTZ DEFAULT NOW(),
+    created_by_email_id TEXT NOT NULL,
+    company_id UUID REFERENCES public.company(id) -- snapshot company to assist aggregation
+);
+
+-- Indexes for Aggregation
+CREATE INDEX IF NOT EXISTS idx_po_company_id ON public.po_data(company_id);
+CREATE INDEX IF NOT EXISTS idx_po_created_by ON public.po_data(created_by_email_id);
+CREATE INDEX IF NOT EXISTS idx_po_created_at ON public.po_data(created_at);
+
+-- RLS for PO Data
+ALTER TABLE public.po_data ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Enable read/write for authenticated users" ON public.po_data
+    FOR ALL TO authenticated USING (true);

@@ -4,6 +4,7 @@
 import { useActionState, useEffect, useRef, useState } from 'react'
 import { addUser, getCompanies, getCurrentUserFullDetails } from '@/app/dashboard/actions'
 import { Loader2, Plus, CheckCircle2, AlertCircle } from 'lucide-react'
+import { useToast } from '@/components/ui/toast'
 
 const initialState = {
     error: undefined as string | undefined,
@@ -37,11 +38,16 @@ export function AddUserForm() {
         })
     }, [])
 
+    const { addToast } = useToast()
+
     useEffect(() => {
         if (state?.success) {
+            addToast(state.message || 'User added successfully')
             formRef.current?.reset()
+        } else if (state?.error) {
+            addToast(state.error, 'error')
         }
-    }, [state?.success])
+    }, [state, addToast])
 
     return (
         <div className="w-full rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
@@ -126,18 +132,7 @@ export function AddUserForm() {
                     )}
                 </div>
 
-                {state?.error && (
-                    <div className="flex items-center gap-2 rounded-md bg-red-50 p-3 text-sm text-red-600">
-                        <AlertCircle className="h-4 w-4" />
-                        <p>{state.error}</p>
-                    </div>
-                )}
-                {state?.success && (
-                    <div className="flex items-center gap-2 rounded-md bg-green-50 p-3 text-sm text-green-600">
-                        <CheckCircle2 className="h-4 w-4" />
-                        <p>{state.message}</p>
-                    </div>
-                )}
+
 
                 <div className="flex justify-end pt-2">
                     <button type="submit" disabled={isPending} className="inline-flex items-center justify-center gap-2 rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-zinc-50 hover:bg-zinc-900/90 disabled:opacity-50">

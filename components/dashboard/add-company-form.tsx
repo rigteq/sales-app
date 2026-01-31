@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useRef, useState } from 'react'
 import { addCompany, getCurrentUserFullDetails } from '@/app/dashboard/actions'
 import { Loader2, Plus, CheckCircle2, AlertCircle, Building2 } from 'lucide-react'
+import { useToast } from '@/components/ui/toast'
 
 const initialState = {
     error: undefined as string | undefined,
@@ -22,11 +23,16 @@ export function AddCompanyForm() {
         })
     }, [])
 
+    const { addToast } = useToast()
+
     useEffect(() => {
         if (state?.success) {
+            addToast(state.message || 'Company added successfully')
             formRef.current?.reset()
+        } else if (state?.error) {
+            addToast(state.error, 'error')
         }
-    }, [state?.success])
+    }, [state, addToast])
 
     if (currentUserRole !== 2) return null
 

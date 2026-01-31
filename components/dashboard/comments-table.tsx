@@ -6,6 +6,12 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { MessageSquare, Trash2 } from 'lucide-react'
 
+// Helper to strip UTC suffix for display
+// Helper to strip UTC suffix for display
+function formatCommentText(text: string) {
+    return text.replace(/\(Scheduled: .*? UTC\)/g, '(Scheduled)')
+}
+
 export function CommentsTable({ comments }: { comments: any[] }) {
     const router = useRouter()
 
@@ -46,7 +52,7 @@ export function CommentsTable({ comments }: { comments: any[] }) {
                                     </Link>
                                 </td>
                                 <td className="px-6 py-4 text-zinc-600 dark:text-zinc-400 max-w-xs truncate">
-                                    {comment.comment_text}
+                                    {formatCommentText(comment.comment_text)}
                                 </td>
                                 <td className="px-6 py-4 text-zinc-600 dark:text-zinc-400 text-xs">
                                     {comment.created_by_email_id}

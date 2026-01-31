@@ -12,13 +12,17 @@ export default async function LeadsPage({
     searchParams?: Promise<{
         query?: string
         page?: string
+        status?: string
+        filter?: string
     }>
 }) {
     const searchParamsValue = await searchParams
     const query = searchParamsValue?.query || ''
     const currentPage = Number(searchParamsValue?.page) || 1
+    const status = searchParamsValue?.status
+    const filter = searchParamsValue?.filter
 
-    const { leads, count } = await getLeads(currentPage, query)
+    const { leads, count } = await getLeads(currentPage, query, { status, filter })
     const totalPages = Math.ceil(count / 10)
 
     return (

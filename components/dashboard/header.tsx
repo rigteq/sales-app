@@ -45,24 +45,24 @@ export function Header({ userName, role = 0 }: { userName?: string, role?: numbe
     )
 
     return (
-        <header className="sticky top-0 z-40 w-full border-b border-zinc-200 bg-white/75 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/75">
+        <header className="sticky top-0 z-40 w-full border-b border-zinc-200/50 bg-white/80 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-950/80">
             <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center gap-4 md:gap-8">
                     {/* Mobile Menu Button */}
                     <button
                         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                        className="md:hidden p-2 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
+                        className="md:hidden p-2 text-slate-500 hover:text-indigo-600 dark:text-zinc-400 dark:hover:text-zinc-50 transition-colors"
                     >
                         <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={isMobileMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
                         </svg>
                     </button>
 
-                    <Link href="/dashboard" className="flex items-center gap-2 font-bold text-xl text-zinc-900 dark:text-zinc-50">
-                        <div className="h-8 w-8 rounded-lg bg-zinc-900 flex items-center justify-center text-white dark:bg-zinc-50 dark:text-zinc-900">
+                    <Link href="/dashboard" className="flex items-center gap-2 font-bold text-xl text-slate-900 dark:text-zinc-50 group">
+                        <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30 transition-transform group-hover:scale-105">
                             R
                         </div>
-                        <span className="hidden sm:inline-block">Rigteq Sales</span>
+                        <span className="hidden sm:inline-block tracking-tight">Rigteq Sales</span>
                     </Link>
 
                     {/* Desktop Nav */}
@@ -78,6 +78,9 @@ export function Header({ userName, role = 0 }: { userName?: string, role?: numbe
                             </Link>
                             <Link onClick={() => setActiveDropdown(null)} href="/dashboard/assigned-leads" className="block px-2 py-1.5 text-sm rounded-sm hover:bg-zinc-100 dark:hover:bg-zinc-900 text-zinc-700 dark:text-zinc-300">
                                 Assigned Leads
+                            </Link>
+                            <Link onClick={() => setActiveDropdown(null)} href="/dashboard/scheduled-leads" className="block px-2 py-1.5 text-sm rounded-sm hover:bg-zinc-100 dark:hover:bg-zinc-900 text-zinc-700 dark:text-zinc-300">
+                                Scheduled Leads
                             </Link>
                         </NavDropdown>
 
@@ -96,6 +99,11 @@ export function Header({ userName, role = 0 }: { userName?: string, role?: numbe
                                 </Link>
                             </NavDropdown>
                         )}
+
+                        {/* PO Link */}
+                        <Link href="/dashboard/pos" className="text-zinc-500 hover:text-zinc-900 transition-colors dark:text-zinc-400 dark:hover:text-zinc-50">
+                            PO
+                        </Link>
 
                         {/* USERS DROPDOWN (Admin/Superadmin) */}
                         {role === 2 ? (
@@ -156,6 +164,14 @@ export function Header({ userName, role = 0 }: { userName?: string, role?: numbe
                                     <Building2 className="h-4 w-4" />
                                     Insights
                                 </Link>
+                                <Link
+                                    href="/dashboard/custom-message"
+                                    className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-zinc-900 hover:bg-zinc-100 dark:text-zinc-50 dark:hover:bg-zinc-900"
+                                    onClick={() => setIsProfileOpen(false)}
+                                >
+                                    <MessageSquare className="h-4 w-4" />
+                                    Custom Message
+                                </Link>
                                 <form action={signOut}>
                                     <button
                                         type="submit"
@@ -177,31 +193,33 @@ export function Header({ userName, role = 0 }: { userName?: string, role?: numbe
             </div>
 
             {/* Mobile Nav Menu */}
-            {isMobileMenuOpen && (
-                <div className="md:hidden border-t border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-4 py-4 space-y-4">
-                    {/* Simplified Mobile Menu */}
-                    <Link href="/dashboard/leads" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-medium">All Leads</Link>
-                    <Link href="/dashboard/my-leads" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-medium">My Leads</Link>
-                    <Link href="/dashboard/assigned-leads" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-medium">Assigned Leads</Link>
+            {
+                isMobileMenuOpen && (
+                    <div className="md:hidden border-t border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-4 py-4 space-y-4">
+                        {/* Simplified Mobile Menu */}
+                        <Link href="/dashboard/leads" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-medium">All Leads</Link>
+                        <Link href="/dashboard/my-leads" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-medium">My Leads</Link>
+                        <Link href="/dashboard/assigned-leads" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-medium">Assigned Leads</Link>
 
-                    {role !== 0 && (
-                        <Link href="/dashboard/comments" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-medium">All Comments</Link>
-                    )}
-                    <Link href="/dashboard/my-comments" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-medium">My Comments</Link>
+                        {role !== 0 && (
+                            <Link href="/dashboard/comments" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-medium">All Comments</Link>
+                        )}
+                        <Link href="/dashboard/my-comments" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-medium">My Comments</Link>
 
-                    {role !== 0 && (
-                        <Link href="/dashboard/users" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-medium">Users</Link>
-                    )}
-                    {role === 2 && (
-                        <Link href="/dashboard/users?filter=admins" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-medium">Admins</Link>
-                    )}
-                    {role === 2 && (
-                        <Link href="/dashboard/companies" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-medium text-zinc-900 dark:text-zinc-50">Companies</Link>
-                    )}
+                        {role !== 0 && (
+                            <Link href="/dashboard/users" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-medium">Users</Link>
+                        )}
+                        {role === 2 && (
+                            <Link href="/dashboard/users?filter=admins" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-medium">Admins</Link>
+                        )}
+                        {role === 2 && (
+                            <Link href="/dashboard/companies" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-medium text-zinc-900 dark:text-zinc-50">Companies</Link>
+                        )}
 
-                    {/* Insights is available in Profile Dropdown */}
-                </div>
-            )}
-        </header>
+                        {/* Insights is available in Profile Dropdown */}
+                    </div>
+                )
+            }
+        </header >
     )
 }

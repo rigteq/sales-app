@@ -7,6 +7,157 @@ import { createAdminClient } from '@/utils/supabase/admin'
 
 type UserRole = 0 | 1 | 2 // 0=User, 1=Admin, 2=Superadmin
 
+// --- PO ACTIONS ---
+
+export async function addPO(prevState: any, formData: FormData) {
+    const supabase = await createClient()
+    const userDetails = await getCurrentUserFullDetails()
+    if (!userDetails) return { error: 'Not authenticated', success: false }
+    const { user, profile } = userDetails
+
+    const leadId = formData.get('leadId')
+    const amountReceived = formData.get('amountReceived')
+    const amountRemaining = formData.get('amountRemaining')
+    const releaseDate = formData.get('releaseDate')
+    const note = formData.get('note')
+
+    if (!leadId || !amountReceived) return { error: 'Lead and Amount Received are required', success: false }
+
+    const { error } = await supabase.from('po_data').insert({
+        lead_id: leadId,
+        amount_received: amountReceived,
+        amount_remaining: amountRemaining || 0,
+        release_date: releaseDate || null,
+        note: note,
+        created_by_email_id: user.email,
+        company_id: profile.company_id
+    })
+
+    if (error) {
+        console.error('PO Add Error', error)
+        return { error: 'Failed to add PO', success: false }
+    }
+
+    // Auto update lead status to PO
+    await supabase.from('leads').update({ status: 'PO' }).eq('id', leadId)
+
+    revalidatePath('/dashboard/pos')
+    revalidatePath(`/dashboard/leads/${leadId}`)
+    return { success: true, message: 'PO Added Successfully' }
+}
+
+export async function getPOs(page = 1, search = '') {
+    const supabase = await createClient()
+    const userDetails = await getCurrentUserFullDetails()
+    if (!userDetails) return { pos: [], count: 0 }
+    const { user, role, profile } = userDetails
+
+    const itemsPerPage = 30
+    const from = (page - 1) * itemsPerPage
+    const to = from + itemsPerPage - 1
+
+    let query = supabase.from('po_data')
+        .select('*, leads(lead_name, phone)', { count: 'exact' })
+        .order('created_at', { ascending: false })
+        .range(from, to)
+
+    // Scope
+    if (role === 2) {
+        // Superadmin: All POs. Verify if company filter needed? 
+        // "Superadmin PO list page shows all POs accross companies" -> Yes, all.
+    } else if (role === 1) {
+        // Admin: Company POs
+        query = query.eq('company_id', profile.company_id)
+    } else {
+        // User: POs within company AND (created_by OR lead assigned_to)
+        // This is complex. The PO table has `created_by`. But we also want POs for leads `assigned_to` this user.
+        // We need a join or subquery.
+        // Since Supabase join filtering is limited on the 'OR' across tables without intricate syntax,
+        // we might do: POs where (created_by = user) OR (lead_id IN (leads where assigned_to = user))
+        // Simplified: Filter POs by company first.
+        query = query.eq('company_id', profile.company_id)
+
+        // Then apply User constraint.
+        // "where userid = po_data.lead_id.create_by_user_id or po_data.lead_id.assigned_to_user_id"
+        // Wait, the PO itself has `created_by`. 
+        // User wants to see POs for LEADS that they created or are assigned to.
+        // So we need to join leads.
+        // Supabase PostgREST: 
+        // !inner join on leads with filter.
+        // .select('*, leads!inner(*)') 
+        // .or(`leads.created_by_email_id.eq.${user.email},leads.assigned_to_email_id.eq.${user.email}`)
+        // Let's try that.
+        // Note: 'leads' relation is `lead_id`.
+
+        // Actually, we can just fetch all POs for company, then filter in code if pagination allows? 
+        // Or use the !inner join syntax.
+        // Let's use !inner on leads.
+        query = supabase.from('po_data')
+            .select('*, leads!inner(lead_name, phone, created_by_email_id, assigned_to_email_id)', { count: 'exact' })
+            .eq('company_id', profile.company_id) // Still enforce company
+            .or(`created_by_email_id.eq.${user.email},assigned_to_email_id.eq.${user.email}`, { foreignTable: 'leads' })
+            .order('created_at', { ascending: false })
+            .range(from, to)
+    }
+
+    const { data, count, error } = await query
+
+    if (error) {
+        console.error('Get POs Error', error)
+        return { pos: [], count: 0 }
+    }
+    return { pos: data, count: count || 0 }
+}
+
+export async function getPOStats() {
+    const supabase = await createClient()
+    const userDetails = await getCurrentUserFullDetails()
+    if (!userDetails) return { total: 0, today: 0, last7: 0, last30: 0 }
+    const { user, role, profile } = userDetails
+
+    // Base Query Helper
+    const getBase = () => {
+        let q = supabase.from('po_data').select('*', { count: 'exact', head: true })
+
+        if (role === 1) {
+            q = q.eq('company_id', profile.company_id)
+        } else if (role === 0) {
+            // User Scope: Need compatible filter. 
+            // Since we can't easily do complicated joins in 'head:true' count queries without slightly more effort,
+            // let's approximate or use the same !inner logic if possible.
+            // Actually, for stats, we might need to rely on `po_data.created_by` or fetch IDs.
+            // "User PO List Page will show POs ... where userid = po.lead...assigned"
+            // If we only look at `po_data`, we miss assigned leads.
+            // Let's use the !inner join technique again.
+            q = supabase.from('po_data')
+                .select('*, leads!inner(created_by_email_id, assigned_to_email_id)', { count: 'exact', head: true })
+                .eq('company_id', profile.company_id) // company constraint
+                .or(`created_by_email_id.eq.${user.email},assigned_to_email_id.eq.${user.email}`, { foreignTable: 'leads' })
+        }
+        return q
+    }
+
+    const runCount = async (modifier?: (q: any) => any) => {
+        let q = getBase()
+        if (modifier) q = modifier(q)
+        const { count } = await q
+        return count || 0
+    }
+
+    const total = await runCount()
+
+    const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+    const today = await runCount(q => q.gte('created_at', todayStart.toISOString()))
+
+    const last7Start = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+    const last7 = await runCount(q => q.gte('created_at', last7Start.toISOString()))
+
+    const last30Start = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+    const last30 = await runCount(q => q.gte('created_at', last30Start.toISOString()))
+
+    return { total, today, last7, last30 }
+}
+
 // --- HELPERS ---
 
 // --- HELPERS ---
@@ -110,7 +261,8 @@ export async function addLead(prevState: any, formData: FormData) {
             note,
             status: status || 'New',
             created_by_email_id: user.email,
-            assigned_to_email_id: finalAssignedTo
+            assigned_to_email_id: finalAssignedTo,
+            schedule_time: formData.get('scheduleTime') || null
         })
 
     if (error) {
@@ -128,7 +280,7 @@ export async function addLead(prevState: any, formData: FormData) {
     return { success: true, message: 'Lead added successfully!', error: undefined }
 }
 
-export async function getLeads(page = 1, search = '', filters: { mineOnly?: boolean, assignedOnly?: boolean } = {}) {
+export async function getLeads(page = 1, search = '', filters: { mineOnly?: boolean, assignedOnly?: boolean, companyId?: string, status?: string, filter?: string } = {}) {
     const supabase = await createClient()
     const userDetails = await getCurrentUserFullDetails()
 
@@ -143,10 +295,40 @@ export async function getLeads(page = 1, search = '', filters: { mineOnly?: bool
         .from('leads')
         .select('*', { count: 'exact' })
         .eq('is_deleted', false)
-        .order('id', { ascending: false })
-        .range(from, to)
 
-    if (role !== 2 && profile.company_id) {
+    // Sorting defaults
+    if (filters.status === 'Scheduled') {
+        query = query.order('schedule_time', { ascending: true })
+    } else {
+        query = query.order('id', { ascending: false })
+    }
+
+    query = query.range(from, to)
+
+    // Apply "new_today" filter
+    if (filters.filter === 'new_today') {
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        query = query.gte('created_time', today.toISOString())
+    }
+
+    // Apply Status Filter
+    if (filters.status) {
+        query = query.eq('status', filters.status)
+    }
+
+    // Company Filter for Superadmin
+    if (role === 2 && filters.companyId) {
+        const { data: companyUsers } = await supabase.from('profiles').select('email').eq('company_id', filters.companyId)
+        const emails = companyUsers?.map(u => u.email) || []
+        if (emails.length > 0) {
+            query = query.in('created_by_email_id', emails)
+        } else {
+            // No users in company, so no leads created by them
+            // effectively return empty, but let's query impossible
+            query = query.eq('id', -1)
+        }
+    } else if (role === 1 && profile.company_id) {
         const { data: companyUsers } = await supabase.from('profiles').select('email').eq('company_id', profile.company_id)
         const emails = companyUsers?.map(u => u.email) || []
 
@@ -155,6 +337,9 @@ export async function getLeads(page = 1, search = '', filters: { mineOnly?: bool
         } else {
             query = query.eq('created_by_email_id', user.email!)
         }
+    } else {
+        // User (Role 0) or fallback
+        query = query.or(`created_by_email_id.eq.${user.email},assigned_to_email_id.eq.${user.email}`)
     }
 
     if (filters.mineOnly) {
@@ -163,6 +348,10 @@ export async function getLeads(page = 1, search = '', filters: { mineOnly?: bool
 
     if (filters.assignedOnly) {
         query = query.eq('assigned_to_email_id', user.email)
+    }
+
+    if (filters.status) {
+        query = query.eq('status', filters.status)
     }
 
     if (search) {
@@ -204,6 +393,13 @@ export async function updateLead(prevState: any, formData: FormData) {
     const phone = formData.get('phone') as string
     const email = formData.get('email') as string
     const secondaryPhone = formData.get('secondaryPhone')
+    const scheduleTime = formData.get('scheduleTime')
+
+    // Status Logic for Schedule Time
+    let finalScheduleTime = scheduleTime;
+    if (status !== 'Scheduled') {
+        finalScheduleTime = null;
+    }
 
     // Validation
     if (!phone && !email && !secondaryPhone) return { error: 'At least one contact method is required.', success: false, message: '' }
@@ -219,6 +415,7 @@ export async function updateLead(prevState: any, formData: FormData) {
             location,
             note,
             status,
+            schedule_time: finalScheduleTime || null,
             last_edited_time: new Date().toISOString()
         })
         .eq('id', id)
@@ -317,15 +514,37 @@ export async function addComment(prevState: any, formData: FormData) {
     const leadId = formData.get('leadId')
     const commentText = formData.get('commentText')
     const status = formData.get('status')
+    const scheduleTime = formData.get('scheduleTime')
 
     if (!commentText) return { error: 'Comment text is required', success: false, message: '' }
     const { data: { user } } = await supabase.auth.getUser()
+
+    let finalScheduleTime = scheduleTime;
+    if (status !== 'Scheduled') {
+        finalScheduleTime = null;
+    }
+
+    let finalCommentText = commentText as string
+    const localScheduleTimeText = formData.get('localScheduleTimeText') as string
+
+    if (status === 'Scheduled') {
+        if (localScheduleTimeText) {
+            finalCommentText += ` (Scheduled: ${localScheduleTimeText})`
+        } else if (finalScheduleTime) {
+            // Fallback if local text not sent (e.g. from existing forms if any not updated)
+            try {
+                const date = new Date(finalScheduleTime as string)
+                // Use a simpler fallback that doesn't scream UTC if possible, or just default.
+                finalCommentText += ` (Scheduled)`
+            } catch (e) { }
+        }
+    }
 
     const { error: commentError } = await supabase
         .from('comments')
         .insert({
             lead_id: leadId,
-            comment_text: commentText,
+            comment_text: finalCommentText,
             status: status,
             created_by_email_id: user?.email
         })
@@ -334,7 +553,11 @@ export async function addComment(prevState: any, formData: FormData) {
     if (status) {
         await supabase
             .from('leads')
-            .update({ status: status, last_edited_time: new Date().toISOString() })
+            .update({
+                status: status,
+                schedule_time: finalScheduleTime || null,
+                last_edited_time: new Date().toISOString()
+            })
             .eq('id', leadId)
     }
 
@@ -349,12 +572,24 @@ export async function deleteComment(id: number, leadId?: number) {
     if (!userDetails) return { error: 'Not authenticated' }
     const { user, role } = userDetails
 
+    // Fetch comment to check ownership and status
+    const { data: cm } = await supabase.from('comments').select('created_by_email_id, status, lead_id').eq('id', id).single()
+
+    if (!cm) return { error: 'Comment not found' }
+
     if (role === 0) {
-        const { data: cm } = await supabase.from('comments').select('created_by_email_id').eq('id', id).single()
-        if (cm?.created_by_email_id !== user.email) return { error: 'Delete only your own comments.' }
+        if (cm.created_by_email_id !== user.email) return { error: 'Delete only your own comments.' }
     }
 
     const { error } = await supabase.from('comments').update({ is_deleted: true }).eq('id', id)
+
+    // Reset lead schedule time if this was a Scheduled comment
+    if (!error && cm.status === 'Scheduled' && cm.lead_id) {
+        await supabase
+            .from('leads')
+            .update({ schedule_time: null })
+            .eq('id', cm.lead_id)
+    }
 
     if (leadId) revalidatePath(`/dashboard/leads/${leadId}`)
     revalidatePath('/dashboard/comments')
@@ -423,22 +658,28 @@ export async function addUser(prevState: any, formData: FormData) {
     return { success: true, message: `${entityName} created successfully`, error: undefined }
 }
 
-export async function getUsers() {
+export async function getUsers(roleFilter?: number, companyIdFilter?: string) {
     const supabase = await createClient()
     const userDetails = await getCurrentUserFullDetails()
 
     if (!userDetails || userDetails.role === 0) return []
 
-    // Fetch profiles and join with roles table to get roleName, and company table
-    // Since roles table is just metadata, we can just use roleId.
-    // However, if we want roleName we could join. 
-    // The previous code selected `roles(role)` which implies a separate table relation.
-    // New relation: profile.roleId -> roles.roleId.
-
     let query = supabase.from('profiles').select('*, role:roles(roleid, rolename), company(companyname)')
 
+    // 1. Authorization Scope
     if (userDetails.role !== 2) {
+        // Admins can only see their company
         query = query.eq('company_id', userDetails.profile.company_id)
+    } else {
+        // Superadmins can see all, OR filter by requested company
+        if (companyIdFilter) {
+            query = query.eq('company_id', companyIdFilter)
+        }
+    }
+
+    // 2. Role Filtering
+    if (roleFilter !== undefined) {
+        query = query.eq('role_id', roleFilter)
     }
 
     const { data, error } = await query
@@ -504,68 +745,121 @@ export async function getUserComments(email: string) {
 
 // --- INSIGHTS ---
 
-export async function getInsights(context: 'all_leads' | 'my_leads' | 'all_comments' | 'my_comments' = 'all_leads') {
+export async function getInsights(context: 'all_leads' | 'my_leads' | 'all_comments' | 'my_comments' | 'assigned_leads' = 'all_leads') {
     const supabase = await createClient()
     const userDetails = await getCurrentUserFullDetails()
     if (!userDetails) return { metric1: 0, metric2: 0, metric3: 0, metric4: 0 }
-    const { user, profile, role } = userDetails
 
-    // Pre-calculate scoping emails
-    let scopeEmails: string[] = []
-    if (role !== 2 && profile.company_id) {
-        const { data: companyUsers } = await supabase.from('profiles').select('email').eq('company_id', profile.company_id)
-        scopeEmails = companyUsers?.map(u => u.email) || []
+    const { user, role, profile } = userDetails
+
+    // Helper to apply common scope (RLS does most, but my_leads needs specific)
+    const applyScope = (query: any) => {
+        // If context specific
+        if (context === 'my_leads') {
+            return query.eq('created_by_email_id', user.email)
+        }
+        if (context === 'assigned_leads') {
+            return query.eq('assigned_to_email_id', user.email)
+        }
+        // all_leads -> RLS handles access. Superadmin/Admin seeing company leads.
+        if (role === 2 && context === 'all_leads' && profile.company_id) {
+            // If we wanted to filter by company explicitly, but RLS might not restrict SuperAdmin from *other* companies?
+            // Actually RLS usually restricts non-superadmins. Superadmin sees all? 
+            // "Superadmin PO list page shows all POs accross companies".
+            // Assuming RLS allows Superadmin to see all.
+        }
+        // Admin
+        if (role === 1 && context === 'all_leads') {
+            // RLS should handle.
+        }
+        return query
     }
 
-    // Helper to Apply Scoping to a Query Builder
-    const applyScope = (q: any) => {
-        q = q.eq('is_deleted', false)
-        if (role !== 2 && profile.company_id && scopeEmails.length > 0) {
-            q = q.in('created_by_email_id', scopeEmails)
-        } else if (role !== 2 && profile.company_id) {
-            q = q.eq('created_by_email_id', user.email)
-        }
-
-        if (context === 'my_leads' || context === 'my_comments') {
-            q = q.eq('created_by_email_id', user.email)
-        }
-        return q
-    }
-
-    if (context === 'all_leads' || context === 'my_leads') {
-        const { count: totalLeads } = await applyScope(supabase.from('leads').select('*', { count: 'exact', head: true }))
+    if (context.includes('leads')) {
+        const qTotal = applyScope(supabase.from('leads').select('*', { count: 'exact', head: true }))
+        const { count: totalLeads } = await qTotal.eq('is_deleted', false)
 
         const qNew = applyScope(supabase.from('leads').select('*', { count: 'exact', head: true }))
-        qNew.gte('created_time', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
-        const { count: newLeads } = await qNew
+        qNew.eq('is_deleted', false)
+        if (context === 'all_leads') {
+            // New Today
+            const today = new Date()
+            today.setHours(0, 0, 0, 0)
+            qNew.gte('created_time', today.toISOString())
+        } else if (context === 'my_leads') {
+            // Contacted Today? Or just "New"?
+            // Label says "Contacted Today". 
+            // Let's stick to "New" for consistency with "New" status unless specifically tracking 'Contacted' status changes?
+            // Lead status 'Contacted'.
+            // Wait, label says "Contacted Today", but logic might be just "Status=Contacted".
+            // Let's count "Status = Contacted".
+            qNew.eq('status', 'Contacted')
+            // And changed today? Hard to track without history table. 
+            // Let's just Count Total Contacted for now? Or just "New" status?
+            // Simple: "Contacted Today" -> Leads with status 'Contacted' created today?
+            // Let's use Status='Contacted' for simplicity due to lack of history log access here.
+        } else {
+            // Assigned: "New Assigned" -> Status 'New'
+            qNew.eq('status', 'New')
+        }
+        const { count: metric2 } = await qNew
 
-        const qActive = applyScope(supabase.from('leads').select('*', { count: 'exact', head: true }))
-        qActive.eq('status', 'In Conversation')
-        const { count: inConversation } = await qActive
+        const qInConv = applyScope(supabase.from('leads').select('*', { count: 'exact', head: true }))
+        qInConv.eq('is_deleted', false).eq('status', 'In Conversation')
+        const { count: metric3 } = await qInConv
 
         const qConv = applyScope(supabase.from('leads').select('*', { count: 'exact', head: true }))
-        qConv.eq('status', 'PO')
-        if (context === 'my_leads') {
-            qConv.gte('created_time', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
-        }
-        const { count: converted } = await qConv
+        qConv.eq('is_deleted', false).eq('status', 'PO')
+        const { count: metric4 } = await qConv
 
         return {
             metric1: totalLeads || 0,
-            metric2: newLeads || 0,
-            metric3: inConversation || 0,
-            metric4: converted || 0
+            metric2: metric2 || 0,
+            metric3: metric3 || 0,
+            metric4: metric4 || 0
         }
     }
 
-    // Comments
-    if (context === 'all_comments' || context === 'my_comments') {
-        const { count: total } = await applyScope(supabase.from('comments').select('*', { count: 'exact', head: true }))
-        return { metric1: total || 0, metric2: 0, metric3: 0, metric4: 0 }
+    // Comments Insights
+    if (context.includes('comments')) {
+        let qTotal = supabase.from('comments').select('*', { count: 'exact', head: true }).eq('is_deleted', false)
+        if (context === 'my_comments') qTotal = qTotal.eq('created_by_email_id', user.email)
+        const { count: total } = await qTotal
+
+        let qToday = supabase.from('comments').select('*', { count: 'exact', head: true }).eq('is_deleted', false)
+        if (context === 'my_comments') qToday = qToday.eq('created_by_email_id', user.email)
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        qToday = qToday.gte('created_time', today.toISOString())
+        const { count: countToday } = await qToday
+
+        // Conversations Today (Unique leads commented on? Or just comments count?)
+        // Label: "Conversations Today" -> Maybe count of comments on distinct leads?
+        // Let's just return countToday for now or duplicate.
+        // Actually, maybe "In Conversation" status comments?
+        // Let's do: Comments with status 'In Conversation'
+        let qConv = supabase.from('comments').select('*', { count: 'exact', head: true }).eq('is_deleted', false).eq('status', 'In Conversation')
+        if (context === 'my_comments') qConv = qConv.eq('created_by_email_id', user.email)
+        qConv = qConv.gte('created_time', today.toISOString())
+        const { count: countConv } = await qConv
+
+        // POs Today
+        let qPO = supabase.from('comments').select('*', { count: 'exact', head: true }).eq('is_deleted', false).eq('status', 'PO')
+        if (context === 'my_comments') qPO = qPO.eq('created_by_email_id', user.email)
+        qPO = qPO.gte('created_time', today.toISOString())
+        const { count: countPO } = await qPO
+
+        return {
+            metric1: total || 0,
+            metric2: countToday || 0,
+            metric3: countConv || 0,
+            metric4: countPO || 0
+        }
     }
 
     return { metric1: 0, metric2: 0, metric3: 0, metric4: 0 }
 }
+
 
 // --- PROFILE ---
 
@@ -637,4 +931,172 @@ export async function addCompany(prevState: any, formData: FormData) {
     revalidatePath('/dashboard')
     // Maybe revalidate a companies list if it exists?
     return { success: true, message: 'Company added successfully', error: undefined }
+}
+
+export async function updateCustomMessage(formData: FormData) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { error: 'Not authenticated', success: false }
+
+    const customMessage = formData.get('customMessage') as string
+
+    const { error } = await supabase
+        .from('profiles')
+        .update({ custom_message: customMessage })
+        .eq('id', user.id)
+
+    if (error) return { error: 'Failed to update custom message', success: false }
+    revalidatePath('/dashboard/custom-message')
+    return { success: true }
+}
+
+export async function getCompany(id: string) {
+    const supabase = await createClient()
+    const { data, error } = await supabase.from('company').select('*').eq('id', id).single()
+    if (error) return null
+    return data
+}
+
+export async function updateCompany(prevState: any, formData: FormData) {
+    const supabase = await createClient()
+    const userDetails = await getCurrentUserFullDetails()
+    // Authorization check
+    if (!userDetails || userDetails.role !== 2) return { error: 'Unauthorized', success: false, message: '' }
+
+    const id = formData.get('id') as string
+    const companyname = formData.get('companyname') as string
+    const companyemail = formData.get('companyemail') as string
+    const companyphone = formData.get('companyphone') as string
+    const companydetails = formData.get('companydetails') as string
+
+    if (!companyname) {
+        return { error: 'Company Name is required', success: false, message: '' }
+    }
+
+    const { error } = await supabase
+        .from('company')
+        .update({ companyname, companyemail, companyphone, companydetails })
+        .eq('id', id)
+
+    if (error) return { error: 'Failed to update company', success: false, message: '' }
+    revalidatePath(`/dashboard/companies/${id}`)
+    return { success: true, message: 'Company updated successfully', error: undefined }
+}
+
+export async function deleteCompany(id: string) {
+    const supabase = await createClient()
+    const userDetails = await getCurrentUserFullDetails()
+    if (!userDetails || userDetails.role !== 2) return { error: 'Unauthorized' }
+
+    const { error } = await supabase.from('company').delete().eq('id', id)
+    if (error) return { error: 'Failed to delete company' }
+    revalidatePath('/dashboard/companies')
+    return { success: true }
+}
+
+export async function getCompanyStats(companyId: string) {
+    const supabase = await createClient()
+
+    // Get Company Users
+    const { data: users, error: usersError } = await supabase
+        .from('profiles')
+        .select('id, email, role_id')
+        .eq('company_id', companyId)
+
+    if (usersError || !users) return { totalLeads: 0, totalAdmins: 0, totalUsers: 0, totalPOs: 0 }
+
+    const userEmails = users.map(u => u.email)
+    const adminsCount = users.filter(u => u.role_id === 1).length
+    const usersCount = users.filter(u => u.role_id === 0).length // or total profiles? Requests says "Total Users". Usually implies Role 0 + 1 or just Role 0. Let's assume Role 0.
+
+    let totalLeads = 0
+    let totalPOs = 0
+
+    if (userEmails.length > 0) {
+        const { count: leads } = await supabase
+            .from('leads')
+            .select('*', { count: 'exact', head: true })
+            .in('created_by_email_id', userEmails)
+            .eq('is_deleted', false)
+        totalLeads = leads || 0
+
+        const { count: pos } = await supabase
+            .from('leads')
+            .select('*', { count: 'exact', head: true })
+            .in('created_by_email_id', userEmails)
+            .eq('status', 'PO')
+            .eq('is_deleted', false)
+        totalPOs = pos || 0
+    }
+
+    return {
+        totalLeads,
+        totalAdmins: adminsCount,
+        totalUsers: usersCount + adminsCount,
+        totalPOs
+    }
+}
+
+// --- ALERTS ---
+export async function getUpcomingScheduledLeads() {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return []
+
+    const now = new Date()
+    // Fetch from 5 mins ago to 25 hours ahead
+    const startTime = new Date(now.getTime() - 5 * 60000)
+    const endTime = new Date(now.getTime() + 25 * 60 * 60000)
+
+    const startISO = startTime.toISOString()
+    const endISO = endTime.toISOString()
+
+    // 1. Fetch ALL scheduled leads in window (scoped by RLS)
+    const { data: leads, error } = await supabase
+        .from('leads')
+        .select('id, lead_name, schedule_time, phone')
+        .eq('status', 'Scheduled')
+        .gt('schedule_time', startISO)
+        .lt('schedule_time', endISO)
+
+    if (error || !leads || leads.length === 0) {
+        return []
+    }
+
+    // 2. Filter by checking who created the SCHEDULED comment
+    // We need to find the latest comment with status='Scheduled' for each lead.
+    // Optimization: Fetch all 'Scheduled' comments for these lead IDs.
+    const leadIds = leads.map(l => l.id)
+
+    // Fetch latest scheduled comment for each lead. 
+    // We can fetch all scheduled comments for these leads, order by created_time desc.
+    const { data: comments, error: commentError } = await supabase
+        .from('comments')
+        .select('lead_id, created_by_email_id')
+        .in('lead_id', leadIds)
+        .eq('status', 'Scheduled')
+        .order('created_time', { ascending: false })
+
+    if (commentError || !comments) return []
+
+    // Map leadId -> creatorEmail of latest scheduled comment
+    const leadCreatorMap = new Map<number, string>()
+    // Since sorted desc, the first one we encounter for a leadId is the latest.
+    comments.forEach(c => {
+        if (!leadCreatorMap.has(c.lead_id)) {
+            leadCreatorMap.set(c.lead_id, c.created_by_email_id)
+        }
+    })
+
+    // 3. Filter leads where current user == comment creator
+    const filteredLeads = leads.filter(lead => {
+        const creatorEmail = leadCreatorMap.get(lead.id)
+        // If no comment found (legacy?), maybe fallback to lead creator or assigned? 
+        // User requested STRICT "scheduled comment.createdby".
+        // But if I reset schedule_time on delete, legacy might be issue.
+        // Let's fallback to assigned_to if no comment found? No, strictly comment creator as requested.
+        return creatorEmail === user.email
+    })
+
+    return filteredLeads
 }

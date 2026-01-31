@@ -38,9 +38,19 @@ export default async function LeadDetailsPage({
     const { data: { user } } = await supabase.auth.getUser()
 
     let userName = 'Sales Team'
+    let customMessage = null
+    let companyName = 'Rigteq Sales'
+
     if (user) {
-        const { data: profile } = await supabase.from('profiles').select('name').eq('id', user.id).single()
-        userName = profile?.name || user.email?.split('@')[0] || 'Sales Team'
+        const { data: profile } = await supabase.from('profiles').select('name, custom_message, company_id').eq('id', user.id).single()
+        if (profile) {
+            userName = profile.name || user.email?.split('@')[0] || 'Sales Team'
+            customMessage = profile.custom_message
+            if (profile.company_id) {
+                const { data: company } = await supabase.from('company').select('companyname').eq('id', profile.company_id).single()
+                if (company) companyName = company.companyname
+            }
+        }
     }
 
     return (
@@ -53,9 +63,9 @@ export default async function LeadDetailsPage({
                 Back to Leads
             </Link>
 
-            <LeadView lead={lead} userName={userName} />
+            <LeadView lead={lead} userName={userName} customMessage={customMessage} companyName={companyName} />
 
-            <LeadComments leadId={leadId} comments={comments} currentStatus={lead.status} />
+            <LeadComments leadId={leadId} comments={comments} currentStatus={lead.status} currentScheduleTime={lead.schedule_time} />
         </div>
     )
 }

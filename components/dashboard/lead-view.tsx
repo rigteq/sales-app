@@ -7,6 +7,7 @@ import { useState } from 'react'
 import { Phone, MessageCircle, Pencil, Trash2, MapPin, Calendar, User } from 'lucide-react'
 import { deleteLead } from '@/app/dashboard/actions'
 import { useRouter } from 'next/navigation'
+import { useToast } from '@/components/ui/toast'
 
 const getStatusColor = (status: string) => {
     switch (status) {
@@ -19,17 +20,20 @@ const getStatusColor = (status: string) => {
     }
 }
 
-export function LeadView({ lead, userName }: { lead: Lead, userName?: string }) {
+export function LeadView({ lead, userName, customMessage, companyName }: { lead: Lead, userName?: string, customMessage?: string | null, companyName?: string }) {
     const [isEditing, setIsEditing] = useState(false)
     const router = useRouter()
+
+    const { addToast } = useToast()
 
     const handleDelete = async () => {
         if (confirm('Are you sure you want to delete this lead? This cannot be undone (soft delete).')) {
             const result = await deleteLead(lead.id)
             if (result?.success) {
+                addToast('Lead deleted successfully')
                 router.push('/dashboard/leads')
             } else {
-                alert('Failed to delete lead')
+                addToast('Failed to delete lead', 'error')
             }
         }
     }
@@ -37,6 +41,15 @@ export function LeadView({ lead, userName }: { lead: Lead, userName?: string }) 
     if (isEditing) {
         return <EditLeadForm lead={lead} onCancel={() => setIsEditing(false)} />
     }
+
+    const defaultMessage = "Hello [Lead Name], [User Name] here from [Company Name]."
+    let messageTemplate = customMessage && customMessage.trim().length > 0 ? customMessage : defaultMessage
+
+    // Replacements
+    const finalMessage = messageTemplate
+        .replace(/\[Lead Name\]/g, lead.lead_name || 'there')
+        .replace(/\[User Name\]/g, userName || 'I am')
+        .replace(/\[Company Name\]/g, companyName || 'Rigteq Sales')
 
     return (
         <div className="rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
@@ -59,9 +72,7 @@ export function LeadView({ lead, userName }: { lead: Lead, userName?: string }) 
                         Call
                     </a>
                     <a
-                        href={`https://wa.me/${lead.phone}?text=${encodeURIComponent(
-                            `Hello ${lead.lead_name}, ${userName || 'I am'} here from Rigteq Solutions. \n\nIs your business ready for a digital upgrade? We are offering a Special Growth Package this week:\n\n 50% Discount on Web & Software Dev.  1 Year FREE Maintenance.  Free Demo customized for your business.\n\nGet your professional website started at just ₹2,999 and manage your operations with ease.\n\nInterested in seeing a free demo of what we can build for you?`
-                        )}`}
+                        href={`https://wa.me/${lead.phone}?text=${encodeURIComponent(finalMessage)}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center justify-center gap-2 rounded-md bg-[#25D366] px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"
