@@ -1162,5 +1162,24 @@ export async function sendBroadcastNotification(prevState: any, formData: FormDa
         return { error: 'Failed to send notification', success: false }
     }
 
+    // ... existing code ...
     return { success: true, message: 'Notification broadcasted successfully' }
+}
+
+export async function getNotifications(limit = 20) {
+    const supabase = await createClient()
+
+    // Check if table exists (it should per docs.sql) but proceed
+    const { data, error, count } = await supabase
+        .from('broadcast_notifications')
+        .select('*', { count: 'exact' })
+        .order('created_at', { ascending: false })
+        .limit(limit)
+
+    if (error) {
+        console.error('Error fetching notifications:', error)
+        return { notifications: [], count: 0 }
+    }
+
+    return { notifications: data || [], count: count || 0 }
 }

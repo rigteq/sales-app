@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { getUpcomingScheduledLeads } from '@/app/dashboard/actions'
 import { Bell, X, Calendar, Phone, CheckCircle2 } from 'lucide-react'
 import { useToast } from '@/components/ui/toast'
@@ -23,7 +23,6 @@ export function ScheduledAlerts() {
     const [alerts, setAlerts] = useState<any[]>([])
     const [processedAlerts, setProcessedAlerts] = useState<Set<string>>(new Set())
 
-    const audioRef = useRef<HTMLAudioElement | null>(null)
     const supabase = createClient()
 
     useEffect(() => {
@@ -31,7 +30,6 @@ export function ScheduledAlerts() {
         if ('Notification' in window) {
             Notification.requestPermission()
         }
-        audioRef.current = new Audio('/notification.mp3')
 
         // Fetch Missed Broadcasts
         const fetchRecentBroadcasts = async () => {
@@ -133,9 +131,6 @@ export function ScheduledAlerts() {
                     if (newAlerts.length > 0) {
                         setAlerts(prev => [...prev, ...newAlerts])
                         playBeep()
-                        if (audioRef.current) {
-                            audioRef.current.play().catch(e => console.log("Audio play blocked", e))
-                        }
 
                         newAlerts.forEach(alert => {
                             sendWebNotification(alert)
