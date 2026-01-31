@@ -78,7 +78,7 @@ export function UsersTable({ users, showCompany }: { users: any[], showCompany?:
                                         {user.phone || '-'}
                                     </td>
                                     <td className="px-6 py-4">
-                                        <div className="flex items-center gap-2 opacity-0 transition-opacity group-hover:opacity-100">
+                                        <div className="flex items-center gap-2 md:opacity-0 transition-opacity group-hover:opacity-100">
                                             <Link
                                                 href={`/dashboard/users/${user.id}`}
                                                 className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-slate-50"

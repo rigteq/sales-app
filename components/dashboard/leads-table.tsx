@@ -58,8 +58,11 @@ export function LeadsTable({ leads }: { leads: Lead[] }) {
                                             <p className="text-xs text-slate-500 dark:text-slate-400">{lead.email}</p>
                                         </div>
                                     </div>
-                                    <div className={`rounded-full px-2 py-0.5 text-[10px] font-medium shrink-0 ${getStatusColor(lead.status || '')}`}>
-                                        {lead.status}
+                                    <div className="flex items-center gap-2">
+                                        <div className={`rounded-full px-2 py-0.5 text-[10px] font-medium shrink-0 ${getStatusColor(lead.status || '')}`}>
+                                            {lead.status}
+                                        </div>
+                                        <Eye className="h-4 w-4 text-slate-400" />
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-2 text-xs">

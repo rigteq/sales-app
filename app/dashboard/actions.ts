@@ -317,28 +317,27 @@ export async function getLeads(page = 1, search = '', filters: { mineOnly?: bool
         query = query.eq('status', filters.status)
     }
 
-    // Company Filter for Superadmin
-    if (role === 2 && filters.companyId) {
-        const { data: companyUsers } = await supabase.from('profiles').select('email').eq('company_id', filters.companyId)
-        const emails = companyUsers?.map(u => u.email) || []
-        if (emails.length > 0) {
-            query = query.in('created_by_email_id', emails)
-        } else {
-            // No users in company, so no leads created by them
-            // effectively return empty, but let's query impossible
-            query = query.eq('id', -1)
+    // Scope Filtering
+    if (role === 2) {
+        // Superadmin: View all by default. Can filter by company.
+        if (filters.companyId) {
+            const { data: companyUsers } = await supabase.from('profiles').select('email').eq('company_id', filters.companyId)
+            const emails = companyUsers?.map(u => u.email) || []
+            query = emails.length > 0 ? query.in('created_by_email_id', emails) : query.eq('id', -1)
         }
-    } else if (role === 1 && profile.company_id) {
+    } else if (profile.company_id) {
+        // Admin (1) and User (0): Show all company leads
         const { data: companyUsers } = await supabase.from('profiles').select('email').eq('company_id', profile.company_id)
         const emails = companyUsers?.map(u => u.email) || []
 
         if (emails.length > 0) {
             query = query.in('created_by_email_id', emails)
         } else {
+            // Fallback for safety
             query = query.eq('created_by_email_id', user.email!)
         }
     } else {
-        // User (Role 0) or fallback
+        // User with no company? Fallback to self
         query = query.or(`created_by_email_id.eq.${user.email},assigned_to_email_id.eq.${user.email}`)
     }
 
@@ -639,6 +638,11 @@ export async function addUser(prevState: any, formData: FormData) {
     if (!email || !password || !name) return { error: 'Missing Required Fields', success: false, message: '' }
 
     const companyId = (currentUser.role === 2 && targetCompanyId) ? targetCompanyId : currentUser.profile.company_id
+    const finalRoleToAssign = currentUser.role === 2 ? (Number(roleToAssign) || 0) : 0 // Admins can only create users (Role 0)
+
+    if (currentUser.role === 1 && Number(roleToAssign) === 1) {
+        return { error: 'Admins cannot create other Admins.', success: false, message: '' }
+    }
 
     // 1. Create Auth User
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
@@ -665,7 +669,7 @@ export async function addUser(prevState: any, formData: FormData) {
         gender,
         address,
         company_id: companyId,
-        role_id: Number(roleToAssign) || 0
+        role_id: finalRoleToAssign
     })
 
     if (profileError) {

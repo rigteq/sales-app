@@ -40,24 +40,24 @@ export async function InsightsView({ context = 'all_leads' }: { context?: 'all_l
 
     const colorConfig = [
         {
-            wrapper: 'border-blue-100 bg-gradient-to-br from-blue-50 via-white to-white dark:from-blue-950/20 dark:to-zinc-900',
+            wrapper: 'border-blue-100 bg-gradient-to-br from-blue-50 via-white to-white dark:from-blue-950/20 dark:to-slate-900',
             iconBg: 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400',
-            text: 'text-zinc-600 dark:text-zinc-400'
+            text: 'text-slate-600 dark:text-slate-400'
         },
         {
-            wrapper: 'border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-white dark:from-emerald-950/20 dark:to-zinc-900',
+            wrapper: 'border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-white dark:from-emerald-950/20 dark:to-slate-900',
             iconBg: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400',
-            text: 'text-zinc-600 dark:text-zinc-400'
+            text: 'text-slate-600 dark:text-slate-400'
         },
         {
-            wrapper: 'border-amber-100 bg-gradient-to-br from-amber-50 via-white to-white dark:from-amber-950/20 dark:to-zinc-900',
+            wrapper: 'border-amber-100 bg-gradient-to-br from-amber-50 via-white to-white dark:from-amber-950/20 dark:to-slate-900',
             iconBg: 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400',
-            text: 'text-zinc-600 dark:text-zinc-400'
+            text: 'text-slate-600 dark:text-slate-400'
         },
         {
-            wrapper: 'border-violet-100 bg-gradient-to-br from-violet-50 via-white to-white dark:from-violet-950/20 dark:to-zinc-900',
+            wrapper: 'border-violet-100 bg-gradient-to-br from-violet-50 via-white to-white dark:from-violet-950/20 dark:to-slate-900',
             iconBg: 'bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400',
-            text: 'text-zinc-600 dark:text-zinc-400'
+            text: 'text-slate-600 dark:text-slate-400'
         }
     ]
 
@@ -71,15 +71,15 @@ export async function InsightsView({ context = 'all_leads' }: { context?: 'all_l
 
                 return (
                     <Link key={i} href={getLink(i)} className="min-w-[260px] snap-center block transition-transform hover:-translate-y-1">
-                        <div className={`h-full rounded-2xl border p-6 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden ${colors.wrapper} dark:border-zinc-800`}>
+                        <div className={`h-full rounded-2xl border p-6 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden ${colors.wrapper} dark:border-slate-800`}>
                             <div className="flex items-center justify-between relative z-10">
-                                <h3 className={`text-sm font-semibold tracking-wide uppercase ${colors.text}`}>{label}</h3>
+                                <h3 className={`text-sm font-bold tracking-wide uppercase ${colors.text}`}>{label}</h3>
                                 <div className={`p-2 rounded-lg ${colors.iconBg}`}>
                                     <Icon className="h-4 w-4" />
                                 </div>
                             </div>
                             <div className="mt-4 relative z-10">
-                                <div className="text-3xl font-bold text-zinc-900 dark:text-zinc-50">{value}</div>
+                                <div className="text-3xl font-black text-slate-900 dark:text-slate-50">{value}</div>
                             </div>
                         </div>
                     </Link>

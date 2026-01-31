@@ -33,6 +33,37 @@ export function ScheduledAlerts() {
         }
         audioRef.current = new Audio('/notification.mp3')
 
+        // Fetch Missed Broadcasts
+        const fetchRecentBroadcasts = async () => {
+            const { data } = await supabase
+                .from('broadcast_notifications')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .limit(1)
+
+            if (data && data.length > 0) {
+                const latest = data[0]
+                const lastSeen = localStorage.getItem('lastSeenBroadcastId')
+
+                // Show if it's new and within last 24 hours
+                const isRecent = (new Date().getTime() - new Date(latest.created_at).getTime()) < 24 * 60 * 60 * 1000
+
+                if (latest.id !== lastSeen && isRecent) {
+                    const alertObj = {
+                        id: latest.id,
+                        type: 'broadcast',
+                        title: latest.title,
+                        message: latest.message,
+                        alertKey: `broadcast-${latest.id}`
+                    }
+                    setAlerts(prev => [...prev, alertObj])
+                    playBeep()
+                    window.dispatchEvent(new CustomEvent('new-broadcast'))
+                }
+            }
+        }
+        fetchRecentBroadcasts()
+
         // Realtime Subscription for Broadcasts
         const channel = supabase
             .channel('broadcast-alerts')
@@ -52,6 +83,7 @@ export function ScheduledAlerts() {
                     setAlerts(prev => [...prev, alertObj])
                     playBeep()
                     sendWebNotification(alertObj)
+                    window.dispatchEvent(new CustomEvent('new-broadcast'))
                 }
             )
             .subscribe()
@@ -169,6 +201,10 @@ export function ScheduledAlerts() {
     }
 
     const acknowledgeAlert = () => {
+        const current = alerts[0]
+        if (current && current.type === 'broadcast') {
+            localStorage.setItem('lastSeenBroadcastId', current.id)
+        }
         // Remove first alert (FIFO)
         setAlerts(prev => prev.slice(1))
     }

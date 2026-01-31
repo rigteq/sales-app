@@ -70,7 +70,7 @@ export function CommentsTable({ comments }: { comments: any[] }) {
                                     {new Date(comment.created_time).toLocaleDateString()}
                                 </td>
                                 <td className="px-6 py-4">
-                                    <div className="flex items-center gap-2 opacity-0 transition-opacity group-hover:opacity-100">
+                                    <div className="flex items-center gap-2 md:opacity-0 transition-opacity group-hover:opacity-100">
                                         <button
                                             onClick={() => handleDelete(comment.id)}
                                             className="rounded p-1 text-zinc-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30 dark:hover:text-red-400"
