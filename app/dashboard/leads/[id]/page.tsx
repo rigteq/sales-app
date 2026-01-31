@@ -53,6 +53,16 @@ export default async function LeadDetailsPage({
         }
     }
 
+    // Task 2: Fetch assignable users for the dropdown
+    let assignableUsers: { email: string, name: string }[] = []
+    if (user) {
+        // We can reuse getAssignableUsers logic or fetch manually here since we are in a server component.
+        // Let's import getAssignableUsers from actions.
+        const { getAssignableUsers } = await import('@/app/dashboard/actions')
+        const users = await getAssignableUsers()
+        assignableUsers = users.map((u: any) => ({ email: u.email, name: u.name }))
+    }
+
     return (
         <div className="w-full max-w-5xl mx-auto space-y-6">
             <Link
@@ -63,7 +73,7 @@ export default async function LeadDetailsPage({
                 Back to Leads
             </Link>
 
-            <LeadView lead={lead} userName={userName} customMessage={customMessage} companyName={companyName} />
+            <LeadView lead={lead} userName={userName} customMessage={customMessage} companyName={companyName} assignableUsers={assignableUsers} />
 
             <LeadComments leadId={leadId} comments={comments} currentStatus={lead.status} currentScheduleTime={lead.schedule_time} />
         </div>

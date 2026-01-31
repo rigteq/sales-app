@@ -19,7 +19,7 @@ export default async function MyLeadsPage({
     const currentPage = Number(searchParamsValue?.page) || 1
 
     const { leads, count } = await getLeads(currentPage, query, { mineOnly: true }) // mineOnly = true
-    const totalPages = Math.ceil(count / 30)
+    const totalPages = Math.ceil(count / 10)
 
     return (
         <div className="w-full">

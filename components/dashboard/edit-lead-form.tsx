@@ -18,7 +18,7 @@ const statusOptions = [
     'PO'
 ]
 
-export function EditLeadForm({ lead, onCancel }: { lead: Lead, onCancel: () => void }) {
+export function EditLeadForm({ lead, onCancel, assignableUsers = [] }: { lead: Lead, onCancel: () => void, assignableUsers?: { email: string, name: string }[] }) {
     const initialState = {
         error: undefined as string | undefined,
         success: false,
@@ -144,6 +144,24 @@ export function EditLeadForm({ lead, onCancel }: { lead: Lead, onCancel: () => v
                         ))}
                     </select>
                 </div>
+
+                {assignableUsers.length > 0 && (
+                    <div className="space-y-2">
+                        <label htmlFor="assignedTo" className="text-sm font-medium">Assigned To</label>
+                        <select
+                            id="assignedTo"
+                            name="assignedTo"
+                            defaultValue={lead.assigned_to_email_id || lead.created_by_email_id || ''}
+                            className="flex h-10 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:border-zinc-800 dark:bg-zinc-950"
+                        >
+                            {assignableUsers.map((u) => (
+                                <option key={u.email} value={u.email}>
+                                    {u.name} ({u.email})
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                )}
 
                 {selectedStatus === 'Scheduled' && (
                     <div className="space-y-2 animate-in fade-in slide-in-from-top-2">

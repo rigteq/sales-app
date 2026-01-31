@@ -20,7 +20,7 @@ const getStatusColor = (status: string) => {
     }
 }
 
-export function LeadView({ lead, userName, customMessage, companyName }: { lead: Lead, userName?: string, customMessage?: string | null, companyName?: string }) {
+export function LeadView({ lead, userName, customMessage, companyName, assignableUsers = [] }: { lead: Lead, userName?: string, customMessage?: string | null, companyName?: string, assignableUsers?: { email: string, name: string }[] }) {
     const [isEditing, setIsEditing] = useState(false)
     const router = useRouter()
 
@@ -39,7 +39,7 @@ export function LeadView({ lead, userName, customMessage, companyName }: { lead:
     }
 
     if (isEditing) {
-        return <EditLeadForm lead={lead} onCancel={() => setIsEditing(false)} />
+        return <EditLeadForm lead={lead} onCancel={() => setIsEditing(false)} assignableUsers={assignableUsers} />
     }
 
     const defaultMessage = "Hello [Lead Name], [User Name] here from [Company Name]."
@@ -72,9 +72,7 @@ export function LeadView({ lead, userName, customMessage, companyName }: { lead:
                         Call
                     </a>
                     <a
-                        href={`https://wa.me/${lead.phone}?text=${encodeURIComponent(finalMessage)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                        href={`whatsapp://send?phone=${lead.phone}&text=${encodeURIComponent(finalMessage)}`}
                         className="inline-flex items-center justify-center gap-2 rounded-md bg-[#25D366] px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"
                     >
                         <MessageCircle className="h-4 w-4" />

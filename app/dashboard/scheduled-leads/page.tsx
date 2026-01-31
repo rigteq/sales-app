@@ -12,7 +12,18 @@ export default async function ScheduledLeadsPage({ searchParams }: { searchParam
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) redirect('/')
 
-    const { leads } = await getLeads(page, '', { status: 'Scheduled' })
+    // Check for Role to restrict scheduled leads
+    const { data: profile } = await supabase.from('profiles').select('role_id').eq('id', user.id).single()
+    const roleId = profile?.role_id ?? 0
+
+    // Task 3: For User (Role 0), show only own/assigned scheduled leads.
+    // We pass a special filter 'mine_or_assigned' to getLeads which we will implement in actions.ts
+    const filters: any = { status: 'Scheduled' }
+    if (roleId === 0) {
+        filters.scope = 'mine_or_assigned'
+    }
+
+    const { leads } = await getLeads(page, '', filters)
 
     return (
         <div className="max-w-7xl mx-auto space-y-8">

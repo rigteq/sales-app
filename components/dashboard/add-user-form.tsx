@@ -17,7 +17,7 @@ export function AddUserForm() {
     const formRef = useRef<HTMLFormElement>(null)
     const [role, setRole] = useState<number>(0)
     const [companies, setCompanies] = useState<any[]>([])
-    const [currentUserRole, setCurrentUserRole] = useState<number>(0)
+    const [currentUserRole, setCurrentUserRole] = useState<number | null>(null)
 
     useEffect(() => {
         // Fetch current user details to know if Superadmin
@@ -27,13 +27,10 @@ export function AddUserForm() {
                 if (details.role === 2) {
                     getCompanies().then(res => {
                         setCompanies(res.companies)
-                        // Preselect Superadmin's own company if exists, else first one
-                        if (details.profile.company_id) {
-                            // find it? Or just let user select. 
-                            // Request: "Superadmins company should be preselected"
-                        }
                     })
                 }
+            } else {
+                setCurrentUserRole(0) // Default to user if fail
             }
         })
     }, [])
@@ -48,6 +45,11 @@ export function AddUserForm() {
             addToast(state.error, 'error')
         }
     }, [state, addToast])
+
+    // Strict Task 1: If User Role (0), do not render the form.
+    if (currentUserRole === 0) return null
+    if (currentUserRole === null) return null // Loading state, keep hidden to avoid flash
+
 
     return (
         <div className="w-full rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-950">

@@ -39,10 +39,22 @@ async function POInsights() {
     )
 }
 
-export default async function POsPage() {
+import { Pagination } from '@/components/ui/pagination'
+
+export default async function POsPage({
+    searchParams,
+}: {
+    searchParams?: Promise<{
+        page?: string
+    }>
+}) {
+    const searchParamsValue = await searchParams
+    const currentPage = Number(searchParamsValue?.page) || 1
+
     // Fetch Data
-    const { pos, count } = await getPOs() // Defaults to page 1. Pagination needed in Table? 
-    // For now simple list.
+    const { pos, count } = await getPOs(currentPage)
+
+    const totalPages = Math.ceil(count / 10)
 
     return (
         <div className="w-full space-y-8">
@@ -53,6 +65,10 @@ export default async function POsPage() {
             <POInsights />
 
             <POsTable pos={pos} />
+
+            <div className="flex w-full justify-center">
+                <Pagination totalPages={totalPages} />
+            </div>
         </div>
     )
 }

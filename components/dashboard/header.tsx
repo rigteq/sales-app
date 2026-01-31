@@ -219,34 +219,51 @@ export function Header({ userName, role = 0 }: { userName?: string, role?: numbe
             </div>
 
             {/* Mobile Nav Menu */}
-            {
-                isMobileMenuOpen && (
-                    <div className="md:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-4 py-4 space-y-4 shadow-lg">
-                        {/* Simplified Mobile Menu */}
-                        <Link href="/dashboard/leads" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-medium text-slate-700 hover:text-indigo-600 dark:text-slate-300 dark:hover:text-indigo-400">All Leads</Link>
-                        <Link href="/dashboard/my-leads" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-medium text-slate-700 hover:text-indigo-600 dark:text-slate-300 dark:hover:text-indigo-400">My Leads</Link>
-                        <Link href="/dashboard/assigned-leads" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-medium text-slate-700 hover:text-indigo-600 dark:text-slate-300 dark:hover:text-indigo-400">Assigned Leads</Link>
-                        <Link href="/dashboard/scheduled-leads" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-medium text-slate-700 hover:text-indigo-600 dark:text-slate-300 dark:hover:text-indigo-400">Scheduled Leads</Link>
+            {isMobileMenuOpen && (
+                <>
+                    <div
+                        className="fixed inset-0 z-30 bg-black/20 md:hidden"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                    />
+                    <div className="absolute top-16 left-0 z-40 w-full border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-4 py-4 space-y-4 shadow-lg md:hidden animate-in slide-in-from-top-2 duration-200">
 
-                        {role !== 0 && (
-                            <Link href="/dashboard/comments" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-medium text-slate-700 hover:text-indigo-600 dark:text-slate-300 dark:hover:text-indigo-400">All Comments</Link>
-                        )}
-                        <Link href="/dashboard/my-comments" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-medium text-slate-700 hover:text-indigo-600 dark:text-slate-300 dark:hover:text-indigo-400">My Comments</Link>
+                        <div className="space-y-1">
+                            <p className="px-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">Leads</p>
+                            <Link href="/dashboard/leads" onClick={() => setIsMobileMenuOpen(false)} className="block rounded-md px-2 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-indigo-400">All Leads</Link>
+                            <Link href="/dashboard/my-leads" onClick={() => setIsMobileMenuOpen(false)} className="block rounded-md px-2 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-indigo-400">My Leads</Link>
+                            <Link href="/dashboard/assigned-leads" onClick={() => setIsMobileMenuOpen(false)} className="block rounded-md px-2 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-indigo-400">Assigned Leads</Link>
+                            <Link href="/dashboard/scheduled-leads" onClick={() => setIsMobileMenuOpen(false)} className="block rounded-md px-2 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-indigo-400">Scheduled Leads</Link>
+                        </div>
 
-                        <Link href="/dashboard/pos" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-medium text-slate-700 hover:text-indigo-600 dark:text-slate-300 dark:hover:text-indigo-400">Purchase Orders (PO)</Link>
+                        {(role !== 0) && (
+                            <div className="space-y-1">
+                                <p className="px-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">Comments</p>
+                                <Link href="/dashboard/comments" onClick={() => setIsMobileMenuOpen(false)} className="block rounded-md px-2 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-indigo-400">All Comments</Link>
+                                <Link href="/dashboard/my-comments" onClick={() => setIsMobileMenuOpen(false)} className="block rounded-md px-2 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-indigo-400">My Comments</Link>
+                            </div>
+                        )}
+                        {role === 0 && (
+                            <Link href="/dashboard/my-comments" onClick={() => setIsMobileMenuOpen(false)} className="block rounded-md px-2 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-indigo-400">My Comments</Link>
+                        )}
 
-                        {role !== 0 && (
-                            <Link href="/dashboard/users" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-medium text-slate-700 hover:text-indigo-600 dark:text-slate-300 dark:hover:text-indigo-400">Users</Link>
-                        )}
-                        {role === 2 && (
-                            <Link href="/dashboard/users?filter=admins" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-medium text-slate-700 hover:text-indigo-600 dark:text-slate-300 dark:hover:text-indigo-400">Admins</Link>
-                        )}
-                        {role === 2 && (
-                            <Link href="/dashboard/companies" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-medium text-slate-700 hover:text-indigo-600 dark:text-slate-300 dark:hover:text-indigo-400">Companies</Link>
+
+                        <Link href="/dashboard/pos" onClick={() => setIsMobileMenuOpen(false)} className="block rounded-md px-2 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-indigo-400">Purchase Orders (PO)</Link>
+
+                        {(role === 1 || role === 2) && (
+                            <div className="space-y-1">
+                                <p className="px-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">Admin</p>
+                                <Link href="/dashboard/users" onClick={() => setIsMobileMenuOpen(false)} className="block rounded-md px-2 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-indigo-400">Users</Link>
+                                {role === 2 && (
+                                    <>
+                                        <Link href="/dashboard/users?filter=admins" onClick={() => setIsMobileMenuOpen(false)} className="block rounded-md px-2 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-indigo-400">Admins</Link>
+                                        <Link href="/dashboard/companies" onClick={() => setIsMobileMenuOpen(false)} className="block rounded-md px-2 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-indigo-400">Companies</Link>
+                                    </>
+                                )}
+                            </div>
                         )}
                     </div>
-                )
-            }
+                </>
+            )}
         </header >
     )
 }

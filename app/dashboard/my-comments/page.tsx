@@ -19,7 +19,7 @@ export default async function MyCommentsPage({
     const currentPage = Number(searchParamsValue?.page) || 1
 
     const { comments, count } = await getComments(currentPage, query, true) // mineOnly = true
-    const totalPages = Math.ceil(count / 30)
+    const totalPages = Math.ceil(count / 10)
 
     return (
         <div className="w-full">

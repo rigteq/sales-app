@@ -19,7 +19,7 @@ export default async function AssignedLeadsPage({
     const currentPage = Number(searchParamsValue?.page) || 1
 
     const { leads, count } = await getLeads(currentPage, query, { assignedOnly: true })
-    const totalPages = Math.ceil(count / 30)
+    const totalPages = Math.ceil(count / 10)
 
     return (
         <div className="w-full">
@@ -29,7 +29,7 @@ export default async function AssignedLeadsPage({
 
             {/* Reusing 'my_leads' context for insights as assigned leads are conceptually 'mine' */}
             <div className="mt-8">
-                <InsightsView context="my_leads" />
+                <InsightsView context="assigned_leads" />
             </div>
 
             <div className="mt-4 flex items-center justify-between gap-2 md:mt-8">

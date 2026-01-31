@@ -18,7 +18,8 @@ export async function InsightsView({ context = 'all_leads' }: { context?: 'all_l
     let basePath = '/dashboard/leads'
     if (context === 'my_leads') basePath = '/dashboard/my-leads'
     if (context === 'assigned_leads') basePath = '/dashboard/assigned-leads'
-    if (context === 'all_comments' || context === 'my_comments') basePath = '/dashboard/comments'
+    if (context === 'all_comments') basePath = '/dashboard/comments'
+    if (context === 'my_comments') basePath = '/dashboard/my-comments'
 
     const isComments = context.includes('comments')
 
@@ -29,11 +30,11 @@ export async function InsightsView({ context = 'all_leads' }: { context?: 'all_l
             if (index === 2) return `${basePath}?status=In Conversation`
             if (index === 3) return `${basePath}?status=PO`
         } else {
-            const cBase = '/dashboard/comments'
-            if (index === 0) return cBase
-            if (index === 1) return `${cBase}?filter=today`
-            if (index === 2) return `${cBase}?status=In Conversation&filter=today`
-            if (index === 3) return `${cBase}?status=PO`
+            // Use resolved basePath for comments as well
+            if (index === 0) return basePath
+            if (index === 1) return `${basePath}?filter=today`
+            if (index === 2) return `${basePath}?status=In Conversation&filter=today`
+            if (index === 3) return `${basePath}?status=PO`
         }
         return basePath
     }

@@ -52,7 +52,7 @@ export async function getPOs(page = 1, search = '') {
     if (!userDetails) return { pos: [], count: 0 }
     const { user, role, profile } = userDetails
 
-    const itemsPerPage = 30
+    const itemsPerPage = 10
     const from = (page - 1) * itemsPerPage
     const to = from + itemsPerPage - 1
 
@@ -197,7 +197,7 @@ export async function getAssignableUsers() {
 
 export async function getCompanies(page = 1, search = '') {
     const supabase = await createClient()
-    const itemsPerPage = 30
+    const itemsPerPage = 10
     const from = (page - 1) * itemsPerPage
     const to = from + itemsPerPage - 1
 
@@ -280,14 +280,14 @@ export async function addLead(prevState: any, formData: FormData) {
     return { success: true, message: 'Lead added successfully!', error: undefined }
 }
 
-export async function getLeads(page = 1, search = '', filters: { mineOnly?: boolean, assignedOnly?: boolean, companyId?: string, status?: string, filter?: string } = {}) {
+export async function getLeads(page = 1, search = '', filters: { mineOnly?: boolean, assignedOnly?: boolean, companyId?: string, status?: string, filter?: string, scope?: string } = {}) {
     const supabase = await createClient()
     const userDetails = await getCurrentUserFullDetails()
 
     if (!userDetails) return { leads: [], count: 0 }
     const { user, profile, role } = userDetails
 
-    const itemsPerPage = 30
+    const itemsPerPage = 10
     const from = (page - 1) * itemsPerPage
     const to = from + itemsPerPage - 1
 
@@ -326,15 +326,21 @@ export async function getLeads(page = 1, search = '', filters: { mineOnly?: bool
             query = emails.length > 0 ? query.in('created_by_email_id', emails) : query.eq('id', -1)
         }
     } else if (profile.company_id) {
-        // Admin (1) and User (0): Show all company leads
-        const { data: companyUsers } = await supabase.from('profiles').select('email').eq('company_id', profile.company_id)
-        const emails = companyUsers?.map(u => u.email) || []
+        // Task 3: If explicit scope requested "mine_or_assigned", override general company policy
+        if (filters.scope === 'mine_or_assigned') {
+            query = query.or(`created_by_email_id.eq.${user.email},assigned_to_email_id.eq.${user.email}`)
+        }
+        else {
+            // Admin (1) and User (0): Show all company leads (Default)
+            const { data: companyUsers } = await supabase.from('profiles').select('email').eq('company_id', profile.company_id)
+            const emails = companyUsers?.map(u => u.email) || []
 
-        if (emails.length > 0) {
-            query = query.in('created_by_email_id', emails)
-        } else {
-            // Fallback for safety
-            query = query.eq('created_by_email_id', user.email!)
+            if (emails.length > 0) {
+                query = query.in('created_by_email_id', emails)
+            } else {
+                // Fallback for safety
+                query = query.eq('created_by_email_id', user.email!)
+            }
         }
     } else {
         // User with no company? Fallback to self
@@ -414,6 +420,7 @@ export async function updateLead(prevState: any, formData: FormData) {
             location,
             note,
             status,
+            assigned_to_email_id: formData.get('assignedTo') as string || null,
             schedule_time: finalScheduleTime || null,
             last_edited_time: new Date().toISOString()
         })
@@ -461,7 +468,7 @@ export async function getComments(page = 1, search = '', mineOnly = false) {
     if (!userDetails) return { comments: [], count: 0 }
     const { user, profile, role } = userDetails
 
-    const itemsPerPage = 30
+    const itemsPerPage = 10
     const from = (page - 1) * itemsPerPage
     const to = from + itemsPerPage - 1
 
