@@ -5,9 +5,10 @@ import { Lead } from '@/types'
 import { EditLeadForm } from './edit-lead-form'
 import { useState } from 'react'
 import { Phone, MessageCircle, Pencil, Trash2, MapPin, Calendar, User } from 'lucide-react'
-import { deleteLead } from '@/app/dashboard/actions'
+import { deleteLead, assignLeadToMe } from '@/app/dashboard/actions'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/components/ui/toast'
+import { UserCheck } from 'lucide-react'
 
 const getStatusColor = (status: string) => {
     switch (status) {
@@ -20,7 +21,7 @@ const getStatusColor = (status: string) => {
     }
 }
 
-export function LeadView({ lead, userName, customMessage, companyName, assignableUsers = [] }: { lead: Lead, userName?: string, customMessage?: string | null, companyName?: string, assignableUsers?: { email: string, name: string }[] }) {
+export function LeadView({ lead, userName, currentUserEmail, customMessage, companyName, assignableUsers = [] }: { lead: Lead, userName?: string, currentUserEmail?: string, customMessage?: string | null, companyName?: string, assignableUsers?: { email: string, name: string }[] }) {
     const [isEditing, setIsEditing] = useState(false)
     const router = useRouter()
 
@@ -35,6 +36,16 @@ export function LeadView({ lead, userName, customMessage, companyName, assignabl
             } else {
                 addToast('Failed to delete lead', 'error')
             }
+        }
+    }
+
+    const handleAssignToMe = async () => {
+        const result = await assignLeadToMe(lead.id)
+        if (result?.success) {
+            addToast('Lead assigned to you successfully')
+            router.refresh()
+        } else {
+            addToast('Failed to assign lead', 'error')
         }
     }
 
@@ -78,6 +89,15 @@ export function LeadView({ lead, userName, customMessage, companyName, assignabl
                         <MessageCircle className="h-4 w-4" />
                         WhatsApp
                     </a>
+                    {currentUserEmail && lead.assigned_to_email_id !== currentUserEmail && (
+                        <button
+                            onClick={handleAssignToMe}
+                            className="inline-flex items-center justify-center gap-2 rounded-md border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 transition-colors hover:bg-indigo-100 dark:border-indigo-900/30 dark:bg-indigo-950/30 dark:text-indigo-400 dark:hover:bg-indigo-950/50"
+                        >
+                            <UserCheck className="h-4 w-4" />
+                            Assign to Me
+                        </button>
+                    )}
                     <button
                         onClick={() => setIsEditing(true)}
                         className="inline-flex items-center justify-center gap-2 rounded-md border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-900 transition-colors hover:bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-50 dark:hover:bg-zinc-800"
@@ -118,6 +138,15 @@ export function LeadView({ lead, userName, customMessage, companyName, assignabl
                     <div className="flex items-center gap-2">
                         <User className="h-4 w-4 text-zinc-400" />
                         <p className="font-medium text-zinc-900 dark:text-zinc-50">{lead.created_by_email_id}</p>
+                    </div>
+                </div>
+                <div className="space-y-1">
+                    <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">Assigned To</p>
+                    <div className="flex items-center gap-2">
+                        <UserCheck className="h-4 w-4 text-zinc-400" />
+                        <p className="font-medium text-zinc-900 dark:text-zinc-50">
+                            {lead.assigned_to_email_id ? lead.assigned_to_email_id : <span className="text-zinc-400 italic">Unassigned</span>}
+                        </p>
                     </div>
                 </div>
                 <div className="col-span-full space-y-1">

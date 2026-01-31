@@ -269,11 +269,6 @@ export function Header({ userName, role = 0 }: { userName?: string, role?: numbe
                                 <FileText className="h-4 w-4 text-slate-500" />
                                 Purchase Orders
                             </Link>
-
-                            <Link href="/dashboard/notifications" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800 transition-all">
-                                <Bell className="h-4 w-4 text-slate-500" />
-                                Notifications
-                            </Link>
                         </div>
 
                         {(role === 1 || role === 2) && (

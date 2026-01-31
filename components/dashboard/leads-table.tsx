@@ -71,6 +71,12 @@ export function LeadsTable({ leads }: { leads: Lead[] }) {
                                         <span className="font-medium text-slate-900 dark:text-slate-100">{lead.phone}</span>
                                     </div>
                                     <div className="text-right">
+                                        <span className="text-slate-500 dark:text-slate-400">Assigned: </span>
+                                        <span className="text-slate-900 dark:text-slate-100 truncate inline-block max-w-[100px] align-bottom">
+                                            {lead.assigned_to_email_id ? lead.assigned_to_email_id.split('@')[0] : 'Unassigned'}
+                                        </span>
+                                    </div>
+                                    <div className="col-span-2 text-right border-t border-slate-100 dark:border-slate-800 pt-1 mt-1">
                                         <span className="text-slate-500 dark:text-slate-400">Created: </span>
                                         <span className="text-slate-900 dark:text-slate-100">{new Date(lead.created_time).toLocaleDateString()}</span>
                                     </div>
@@ -89,9 +95,6 @@ export function LeadsTable({ leads }: { leads: Lead[] }) {
                                 </th>
                                 <th scope="col" className="px-3 py-5 font-medium text-slate-500 dark:text-slate-400">
                                     Phone
-                                </th>
-                                <th scope="col" className="px-3 py-5 font-medium text-slate-500 dark:text-slate-400">
-                                    Location
                                 </th>
                                 <th scope="col" className="px-3 py-5 font-medium text-slate-500 dark:text-slate-400">
                                     Assigned To
@@ -127,9 +130,6 @@ export function LeadsTable({ leads }: { leads: Lead[] }) {
                                     </td>
                                     <td className="whitespace-nowrap px-3 py-3 text-slate-500 dark:text-slate-400">
                                         {lead.phone}
-                                    </td>
-                                    <td className="whitespace-nowrap px-3 py-3 text-slate-500 dark:text-slate-400">
-                                        {lead.location || '-'}
                                     </td>
                                     <td className="whitespace-nowrap px-3 py-3 text-slate-500 dark:text-slate-400 text-xs">
                                         {lead.assigned_to_email_id || lead.created_by_email_id}

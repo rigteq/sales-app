@@ -787,64 +787,54 @@ export async function getInsights(context: 'all_leads' | 'my_leads' | 'all_comme
 
     const { user, role, profile } = userDetails
 
-    // Helper to apply common scope (RLS does most, but my_leads needs specific)
-    const applyScope = (query: any) => {
-        // If context specific
-        if (context === 'my_leads') {
-            return query.eq('created_by_email_id', user.email)
-        }
-        if (context === 'assigned_leads') {
-            return query.eq('assigned_to_email_id', user.email)
-        }
-        // all_leads -> RLS handles access. Superadmin/Admin seeing company leads.
-        if (role === 2 && context === 'all_leads' && profile.company_id) {
-            // If we wanted to filter by company explicitly, but RLS might not restrict SuperAdmin from *other* companies?
-            // Actually RLS usually restricts non-superadmins. Superadmin sees all? 
-            // "Superadmin PO list page shows all POs accross companies".
-            // Assuming RLS allows Superadmin to see all.
-        }
-        // Admin
-        if (role === 1 && context === 'all_leads') {
-            // RLS should handle.
-        }
-        return query
+    // Helper to get company emails for filtering
+    const getCompanyEmails = async () => {
+        if (!profile.company_id) return [user.email]
+        const { data } = await supabase.from('profiles').select('email').eq('company_id', profile.company_id)
+        return data?.map(p => p.email) || [user.email]
     }
 
     if (context.includes('leads')) {
-        const qTotal = applyScope(supabase.from('leads').select('*', { count: 'exact', head: true }))
-        const { count: totalLeads } = await qTotal.eq('is_deleted', false)
+        const companyEmails = (role !== 2 && context === 'all_leads') ? await getCompanyEmails() : []
 
-        const qNew = applyScope(supabase.from('leads').select('*', { count: 'exact', head: true }))
-        qNew.eq('is_deleted', false)
+        // Base Query Builder with Company Scope
+        const buildLeadQuery = () => {
+            let q = supabase.from('leads').select('*', { count: 'exact', head: true }).eq('is_deleted', false)
+            if (role !== 2 && context === 'all_leads' && companyEmails.length > 0) {
+                q = q.in('created_by_email_id', companyEmails)
+            }
+            if (context === 'my_leads') {
+                q = q.eq('created_by_email_id', user.email)
+            }
+            if (context === 'assigned_leads') {
+                q = q.eq('assigned_to_email_id', user.email)
+            }
+            return q
+        }
+
+        const { count: totalLeads } = await buildLeadQuery()
+
+        let qNew = buildLeadQuery()
         if (context === 'all_leads') {
             // New Today
             const today = new Date()
             today.setHours(0, 0, 0, 0)
-            qNew.gte('created_time', today.toISOString())
+            qNew = qNew.gte('created_time', today.toISOString())
         } else if (context === 'my_leads') {
-            // Contacted Today? Or just "New"?
-            // Label says "Contacted Today". 
-            // Let's stick to "New" for consistency with "New" status unless specifically tracking 'Contacted' status changes?
-            // Lead status 'Contacted'.
-            // Wait, label says "Contacted Today", but logic might be just "Status=Contacted".
-            // Let's count "Status = Contacted".
-            qNew.eq('status', 'Contacted')
-            // And changed today? Hard to track without history table. 
-            // Let's just Count Total Contacted for now? Or just "New" status?
-            // Simple: "Contacted Today" -> Leads with status 'Contacted' created today?
-            // Let's use Status='Contacted' for simplicity due to lack of history log access here.
+            // "Contacted Today" -> Status 'Contacted'
+            qNew = qNew.eq('status', 'Contacted')
         } else {
-            // Assigned: "New Assigned" -> Status 'New'
-            qNew.eq('status', 'New')
+            // Assigned -> "New"
+            qNew = qNew.eq('status', 'New')
         }
         const { count: metric2 } = await qNew
 
-        const qInConv = applyScope(supabase.from('leads').select('*', { count: 'exact', head: true }))
-        qInConv.eq('is_deleted', false).eq('status', 'In Conversation')
+        let qInConv = buildLeadQuery()
+        qInConv = qInConv.eq('status', 'In Conversation')
         const { count: metric3 } = await qInConv
 
-        const qConv = applyScope(supabase.from('leads').select('*', { count: 'exact', head: true }))
-        qConv.eq('is_deleted', false).eq('status', 'PO')
+        let qConv = buildLeadQuery()
+        qConv = qConv.eq('status', 'PO')
         const { count: metric4 } = await qConv
 
         return {
@@ -857,31 +847,33 @@ export async function getInsights(context: 'all_leads' | 'my_leads' | 'all_comme
 
     // Comments Insights
     if (context.includes('comments')) {
-        let qTotal = supabase.from('comments').select('*', { count: 'exact', head: true }).eq('is_deleted', false)
-        if (context === 'my_comments') qTotal = qTotal.eq('created_by_email_id', user.email)
-        const { count: total } = await qTotal
+        const companyEmails = (role !== 2 && context === 'all_comments') ? await getCompanyEmails() : []
 
-        let qToday = supabase.from('comments').select('*', { count: 'exact', head: true }).eq('is_deleted', false)
-        if (context === 'my_comments') qToday = qToday.eq('created_by_email_id', user.email)
+        const buildCommentQuery = () => {
+            let q = supabase.from('comments').select('*', { count: 'exact', head: true }).eq('is_deleted', false)
+            if (role !== 2 && context === 'all_comments' && companyEmails.length > 0) {
+                q = q.in('created_by_email_id', companyEmails)
+            }
+            if (context === 'my_comments') {
+                q = q.eq('created_by_email_id', user.email)
+            }
+            return q
+        }
+
+        const { count: total } = await buildCommentQuery()
+
+        let qToday = buildCommentQuery()
         const today = new Date()
         today.setHours(0, 0, 0, 0)
         qToday = qToday.gte('created_time', today.toISOString())
         const { count: countToday } = await qToday
 
-        // Conversations Today (Unique leads commented on? Or just comments count?)
-        // Label: "Conversations Today" -> Maybe count of comments on distinct leads?
-        // Let's just return countToday for now or duplicate.
-        // Actually, maybe "In Conversation" status comments?
-        // Let's do: Comments with status 'In Conversation'
-        let qConv = supabase.from('comments').select('*', { count: 'exact', head: true }).eq('is_deleted', false).eq('status', 'In Conversation')
-        if (context === 'my_comments') qConv = qConv.eq('created_by_email_id', user.email)
-        qConv = qConv.gte('created_time', today.toISOString())
+        let qConv = buildCommentQuery()
+        qConv = qConv.eq('status', 'In Conversation').gte('created_time', today.toISOString())
         const { count: countConv } = await qConv
 
-        // POs Today
-        let qPO = supabase.from('comments').select('*', { count: 'exact', head: true }).eq('is_deleted', false).eq('status', 'PO')
-        if (context === 'my_comments') qPO = qPO.eq('created_by_email_id', user.email)
-        qPO = qPO.gte('created_time', today.toISOString())
+        let qPO = buildCommentQuery()
+        qPO = qPO.eq('status', 'PO').gte('created_time', today.toISOString())
         const { count: countPO } = await qPO
 
         return {
@@ -1042,7 +1034,7 @@ export async function getCompanyStats(companyId: string) {
 
     const userEmails = users.map(u => u.email)
     const adminsCount = users.filter(u => u.role_id === 1).length
-    const usersCount = users.filter(u => u.role_id === 0).length // or total profiles? Requests says "Total Users". Usually implies Role 0 + 1 or just Role 0. Let's assume Role 0.
+    const usersCount = users.filter(u => u.role_id === 0).length
 
     let totalLeads = 0
     let totalPOs = 0
@@ -1067,7 +1059,7 @@ export async function getCompanyStats(companyId: string) {
     return {
         totalLeads,
         totalAdmins: adminsCount,
-        totalUsers: usersCount + adminsCount,
+        totalUsers: usersCount, // Only count Role 0 as requested
         totalPOs
     }
 }
@@ -1176,10 +1168,40 @@ export async function getNotifications(limit = 20) {
         .order('created_at', { ascending: false })
         .limit(limit)
 
+
     if (error) {
         console.error('Error fetching notifications:', error)
         return { notifications: [], count: 0 }
     }
 
     return { notifications: data || [], count: count || 0 }
+}
+
+export async function deleteNotification(id: string) {
+    const supabase = await createClient()
+    const userDetails = await getCurrentUserFullDetails()
+    // Only Superadmin
+    if (!userDetails || userDetails.role !== 2) return { error: 'Unauthorized' }
+
+    const { error } = await supabase.from('broadcast_notifications').delete().eq('id', id)
+    if (error) return { error: 'Failed to delete notification' }
+    revalidatePath('/dashboard/notifications')
+    return { success: true }
+}
+
+export async function assignLeadToMe(id: number) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { error: 'Not authenticated', success: false }
+
+    const { error } = await supabase
+        .from('leads')
+        .update({ assigned_to_email_id: user.email, last_edited_time: new Date().toISOString() })
+        .eq('id', id)
+
+    if (error) return { error: 'Failed to assign lead', success: false }
+
+    revalidatePath(`/dashboard/leads/${id}`)
+    revalidatePath(`/dashboard/leads`)
+    return { success: true, message: 'Lead assigned to you successfully.' }
 }

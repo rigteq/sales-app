@@ -73,7 +73,7 @@ export default async function LeadDetailsPage({
                 Back to Leads
             </Link>
 
-            <LeadView lead={lead} userName={userName} customMessage={customMessage} companyName={companyName} assignableUsers={assignableUsers} />
+            <LeadView lead={lead} userName={userName} currentUserEmail={user?.email} customMessage={customMessage} companyName={companyName} assignableUsers={assignableUsers} />
 
             <LeadComments leadId={leadId} comments={comments} currentStatus={lead.status} currentScheduleTime={lead.schedule_time} />
         </div>

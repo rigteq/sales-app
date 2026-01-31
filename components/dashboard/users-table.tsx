@@ -30,7 +30,7 @@ export function UsersTable({ users, showCompany }: { users: any[], showCompany?:
                     <thead>
                         <tr className="border-b border-slate-200 bg-slate-50/50 text-xs font-medium text-slate-500 dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-400">
                             <th className="px-6 py-3">User</th>
-                            <th className="px-6 py-3">Role</th>
+                            <th className="px-6 py-3">Email</th>
                             {showCompany && <th className="px-6 py-3">Company</th>}
                             <th className="px-6 py-3">Phone</th>
                             <th className="px-6 py-3 w-[100px]">Actions</th>
@@ -56,18 +56,11 @@ export function UsersTable({ users, showCompany }: { users: any[], showCompany?:
                                                 <Link href={`/dashboard/users/${user.id}`} className="font-medium text-slate-900 dark:text-slate-100 hover:underline">
                                                     {user.name}
                                                 </Link>
-                                                <div className="text-xs text-slate-500 dark:text-slate-400">{user.email}</div>
                                             </div>
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4">
-                                        <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium 
-                                        ${roleId === 2 ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' :
-                                                roleId === 1 ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
-                                                    'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400'}`}>
-                                            {roleId === 2 ? <ShieldAlert className="h-3 w-3" /> : roleId === 1 ? <Shield className="h-3 w-3" /> : <User className="h-3 w-3" />}
-                                            {roleName}
-                                        </span>
+                                    <td className="px-6 py-4 text-slate-600 dark:text-slate-400">
+                                        {user.email}
                                     </td>
                                     {showCompany && (
                                         <td className="px-6 py-4 text-slate-600 dark:text-slate-400">
