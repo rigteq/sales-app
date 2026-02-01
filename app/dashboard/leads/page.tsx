@@ -26,9 +26,12 @@ export default async function LeadsPage({
     const totalPages = Math.ceil(count / 50)
 
     return (
-        <div className="w-full">
+        <div className="w-full space-y-6">
             <div className="flex w-full items-center justify-between">
-                <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">All Leads</h1>
+                <div>
+                    <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">All Leads</h1>
+                    <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Manage and track all sales leads.</p>
+                </div>
             </div>
 
             <div className="mt-8">

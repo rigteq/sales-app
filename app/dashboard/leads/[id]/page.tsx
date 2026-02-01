@@ -19,6 +19,7 @@ export default async function LeadDetailsPage({
     const resolvedSearchParams = await searchParams
     const returnPage = resolvedSearchParams?.returnPage || '1'
     const returnPath = resolvedSearchParams?.returnPath || '/dashboard/leads'
+    const page = Number(resolvedSearchParams.page) || 1
 
     const leadId = Number(id)
 
@@ -32,7 +33,8 @@ export default async function LeadDetailsPage({
         notFound()
     }
 
-    const comments = await getLeadComments(leadId)
+    const { comments, count } = await getLeadComments(leadId, page)
+    const totalPages = Math.ceil(count / 50)
 
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -75,7 +77,7 @@ export default async function LeadDetailsPage({
 
             <LeadView lead={lead} userName={userName} currentUserEmail={user?.email} customMessage={customMessage} companyName={companyName} assignableUsers={assignableUsers} />
 
-            <LeadComments leadId={leadId} comments={comments} currentStatus={lead.status} currentScheduleTime={lead.schedule_time} />
+            <LeadComments leadId={leadId} comments={comments} currentStatus={lead.status} currentScheduleTime={lead.schedule_time} totalPages={totalPages} />
         </div>
     )
 }

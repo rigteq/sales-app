@@ -2,17 +2,22 @@
 import { getUser, getUserComments } from '@/app/dashboard/actions'
 import { notFound } from 'next/navigation'
 import { CommentsTable } from '@/components/dashboard/comments-table'
-import { User, Shield, Building2, Phone, Mail, Calendar } from 'lucide-react'
+import { User, Building2, Phone, Mail, Calendar } from 'lucide-react'
+import { Pagination } from '@/components/ui/pagination'
 
-export default async function UserDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function UserDetailsPage({ params, searchParams }: { params: Promise<{ id: string }>, searchParams: Promise<{ [key: string]: string | undefined }> }) {
     const { id } = await params
+    const resolvedSearchParams = await searchParams
+    const page = Number(resolvedSearchParams.page) || 1
+
     const user = await getUser(id)
 
     if (!user) {
         notFound()
     }
 
-    const comments = await getUserComments(user.email)
+    const { comments, count } = await getUserComments(user.email, page)
+    const totalPages = Math.ceil(count / 50)
 
     // Helper for role display
     const roleName = user.role?.roleName || (user.roleId === 2 ? 'Superadmin' : user.roleId === 1 ? 'Admin' : 'User')
@@ -78,6 +83,9 @@ export default async function UserDetailsPage({ params }: { params: Promise<{ id
             <div>
                 <h2 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-50">Recent Activity (Comments)</h2>
                 <CommentsTable comments={comments} />
+                <div className="mt-5 flex w-full justify-center">
+                    <Pagination totalPages={totalPages} />
+                </div>
             </div>
         </div>
     )

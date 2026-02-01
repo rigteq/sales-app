@@ -62,6 +62,13 @@ export function LeadView({ lead, userName, currentUserEmail, customMessage, comp
         .replace(/\[User Name\]/g, userName || 'I am')
         .replace(/\[Company Name\]/g, companyName || 'Rigteq Sales')
 
+    let rawPhone = lead.phone?.replace(/\D/g, '') || ''
+    // If it starts with '0', remove it.
+    if (rawPhone.startsWith('0')) {
+        rawPhone = rawPhone.substring(1)
+    }
+    const formattedPhone = rawPhone.length === 10 ? `91${rawPhone}` : rawPhone
+
     return (
         <div className="rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
             <div className="flex flex-col border-b border-zinc-200 p-6 dark:border-zinc-800 md:flex-row md:items-start md:justify-between">
@@ -83,7 +90,9 @@ export function LeadView({ lead, userName, currentUserEmail, customMessage, comp
                         Call
                     </a>
                     <a
-                        href={`whatsapp://send?phone=${lead.phone}&text=${encodeURIComponent(finalMessage)}`}
+                        href={`https://wa.me/${formattedPhone}?text=${encodeURIComponent(finalMessage)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
                         className="inline-flex items-center justify-center gap-2 rounded-md bg-[#25D366] px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"
                     >
                         <MessageCircle className="h-4 w-4" />

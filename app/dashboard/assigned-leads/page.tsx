@@ -12,19 +12,26 @@ export default async function AssignedLeadsPage({
     searchParams?: Promise<{
         query?: string
         page?: string
+        status?: string
+        filter?: string
     }>
 }) {
     const searchParamsValue = await searchParams
     const query = searchParamsValue?.query || ''
     const currentPage = Number(searchParamsValue?.page) || 1
+    const status = searchParamsValue?.status
+    const filter = searchParamsValue?.filter
 
-    const { leads, count } = await getLeads(currentPage, query, { assignedOnly: true })
+    const { leads, count } = await getLeads(currentPage, query, { assignedOnly: true, status, filter })
     const totalPages = Math.ceil(count / 50)
 
     return (
-        <div className="w-full">
+        <div className="w-full space-y-6">
             <div className="flex w-full items-center justify-between">
-                <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">Assigned Leads</h1>
+                <div>
+                    <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">Assigned Leads</h1>
+                    <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Leads assigned to you for follow-up.</p>
+                </div>
             </div>
 
             {/* Reusing 'my_leads' context for insights as assigned leads are conceptually 'mine' */}

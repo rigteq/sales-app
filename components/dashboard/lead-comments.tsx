@@ -6,15 +6,15 @@ import { useActionState, useState, useRef, useEffect } from 'react'
 import { Loader2, Send, Trash2 } from 'lucide-react'
 import { useToast } from '@/components/ui/toast'
 
+import { Pagination } from '@/components/ui/pagination'
+
 // Helper to strip UTC suffix for display
 function formatCommentText(text: string) {
     return text.replace(/\(Scheduled: .*? UTC\)/g, '(Scheduled)')
 }
 
-export function LeadComments({ leadId, comments, currentStatus, currentScheduleTime }: { leadId: number, comments: Comment[], currentStatus: string, currentScheduleTime?: string | null }) {
-    // ...
-    // In render loop:
-    // {formatCommentText(comment.comment_text)}
+export function LeadComments({ leadId, comments, currentStatus, currentScheduleTime, totalPages }: { leadId: number, comments: Comment[], currentStatus: string, currentScheduleTime?: string | null, totalPages: number }) {
+    // ... existing hooks ...
     const initialState = {
         error: undefined,
         success: false,
@@ -29,10 +29,7 @@ export function LeadComments({ leadId, comments, currentStatus, currentScheduleT
     const [selectedStatus, setSelectedStatus] = useState(currentStatus)
     const [localScheduleTime, setLocalScheduleTime] = useState(() => {
         if (currentScheduleTime) {
-            // currentScheduleTime is UTC ISO string from server (e.g. 2024-01-31T10:30:00Z)
-            // We want to show this in the local input.
-            // new Date("2024-01-31T10:30:00Z") creates a date object in browser's local timezone.
-            // We extract local year, month, etc.
+            // currentScheduleTime is UTC ISO string from server
             const date = new Date(currentScheduleTime)
             const pad = (n: number) => n < 10 ? '0' + n : n
             return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
@@ -46,10 +43,6 @@ export function LeadComments({ leadId, comments, currentStatus, currentScheduleT
         if (state?.success) {
             addToast('Comment added successfully')
             if (formRef.current) formRef.current.reset()
-            // Keep status or reset? "Old comment text if any get reset to new deault text" logic suggests we mostly keep state or rely on form reset. 
-            // Usually we might want to keep status as is or update it if the server returned fetch.
-            // But here we just reset the comment text mainly.
-            // Let's assume we keep the status as whatever it was set to.
         } else if (state?.error) {
             addToast(state.error, 'error')
         }
@@ -135,7 +128,7 @@ export function LeadComments({ leadId, comments, currentStatus, currentScheduleT
                         <div className="flex flex-col gap-2 min-w-[200px]">
                             <select
                                 name="status"
-                                key={currentStatus} // Reset if prop changes? Maybe not needed if state controls it.
+                                key={currentStatus}
                                 value={selectedStatus}
                                 onChange={handleStatusChange}
                                 className="w-full rounded-md border border-zinc-200 bg-white p-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:border-zinc-800 dark:bg-zinc-950"
@@ -143,7 +136,6 @@ export function LeadComments({ leadId, comments, currentStatus, currentScheduleT
                                 {statusOptions.map(s => <option key={s} value={s}>{s}</option>)}
                             </select>
 
-                            {/* Scheduled Time Input - Aligned in this column */}
                             {selectedStatus === 'Scheduled' && (
                                 <div className="animate-in fade-in slide-in-from-top-2 space-y-1">
                                     <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">Scheduled Time</label>
@@ -155,7 +147,6 @@ export function LeadComments({ leadId, comments, currentStatus, currentScheduleT
                                         className="w-full rounded-md border border-zinc-200 bg-white p-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:border-zinc-800 dark:bg-zinc-950"
                                     />
                                     <input type="hidden" name="scheduleTime" value={utcScheduleTime} />
-                                    {/* Send local time text for comment appending */}
                                     <input type="hidden" name="localScheduleTimeText" value={localScheduleTime ? new Date(localScheduleTime).toLocaleString() : ''} />
                                 </div>
                             )}
@@ -205,6 +196,11 @@ export function LeadComments({ leadId, comments, currentStatus, currentScheduleT
                             </div>
                         </div>
                     ))
+                )}
+                {totalPages > 1 && (
+                    <div className="mt-5 flex w-full justify-center">
+                        <Pagination totalPages={totalPages} />
+                    </div>
                 )}
             </div>
         </div>

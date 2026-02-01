@@ -12,19 +12,26 @@ export default async function MyCommentsPage({
     searchParams?: Promise<{
         query?: string
         page?: string
+        status?: string
+        filter?: string
     }>
 }) {
     const searchParamsValue = await searchParams
     const query = searchParamsValue?.query || ''
     const currentPage = Number(searchParamsValue?.page) || 1
+    const status = searchParamsValue?.status
+    const filter = searchParamsValue?.filter
 
-    const { comments, count } = await getComments(currentPage, query, true) // mineOnly = true
+    const { comments, count } = await getComments(currentPage, query, true, { status, filter }) // mineOnly = true
     const totalPages = Math.ceil(count / 50)
 
     return (
-        <div className="w-full">
+        <div className="w-full space-y-6">
             <div className="flex w-full items-center justify-between">
-                <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">My Comments</h1>
+                <div>
+                    <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">My Comments</h1>
+                    <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Your comment history.</p>
+                </div>
             </div>
 
             <div className="mt-8">

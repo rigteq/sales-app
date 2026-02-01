@@ -1,33 +1,52 @@
-import { getCurrentUserFullDetails, getNotifications, deleteNotification } from '@/app/dashboard/actions'
+import { getCurrentUserFullDetails, getNotifications } from '@/app/dashboard/actions'
 import { redirect } from 'next/navigation'
 import { format } from 'date-fns'
+import { Search } from '@/components/ui/search'
+import { Pagination } from '@/components/ui/pagination'
+import { InsightsView } from '@/components/dashboard/insights-view'
+import { NotificationDeleteButton } from '@/components/dashboard/notification-delete-button'
 
 export const metadata = {
     title: 'Notifications | Rigteq Sales',
     description: 'View your important messages and updates.',
 }
 
-export default async function NotificationsPage() {
+export default async function NotificationsPage({
+    searchParams,
+}: {
+    searchParams: Promise<{ [key: string]: string | undefined }>
+}) {
     const user = await getCurrentUserFullDetails()
 
     if (!user) {
         redirect('/dashboard')
     }
 
-    const { notifications, count } = await getNotifications()
+    const params = await searchParams
+    const page = Number(params?.page) || 1
+    const query = params?.query || ''
+
+    const { notifications, count } = await getNotifications(page, query)
+    const totalPages = Math.ceil(count / 50)
 
     return (
-        <div className="container mx-auto px-4 py-8 md:py-12">
-            <div className="mb-8">
-                <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50 sm:text-4xl">
-                    Notifications
-                </h1>
-                <p className="mt-2 text-lg text-slate-600 dark:text-slate-400">
-                    Stay updated with important announcements.
-                </p>
+        <div className="w-full space-y-6">
+            <div className="flex w-full items-center justify-between">
+                <div>
+                    <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">Notifications</h1>
+                    <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Stay updated with important announcements.</p>
+                </div>
             </div>
 
-            <div className="space-y-4">
+            <div className="mt-8">
+                <InsightsView context="notifications" />
+            </div>
+
+            <div className="mt-4 flex items-center justify-between gap-2 md:mt-8">
+                <Search placeholder="Search notifications..." />
+            </div>
+
+            <div className="space-y-4 mt-4">
                 {notifications.length > 0 ? (
                     notifications.map((notification: any) => (
                         <div key={notification.id} className="relative overflow-hidden rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:shadow-md dark:border-slate-800 dark:bg-slate-950">
@@ -45,11 +64,7 @@ export default async function NotificationsPage() {
                                         Broadcast
                                     </span>
                                     {user.role === 2 && (
-                                        <form action={deleteNotification.bind(null, notification.id)}>
-                                            <button className="text-slate-400 hover:text-red-600 transition-colors p-1" title="Delete Notification">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-trash-2"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /><line x1="10" x2="10" y1="11" y2="17" /><line x1="14" x2="14" y1="11" y2="17" /></svg>
-                                            </button>
-                                        </form>
+                                        <NotificationDeleteButton id={notification.id} />
                                     )}
                                 </div>
                             </div>
@@ -72,6 +87,9 @@ export default async function NotificationsPage() {
                         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">You're all caught up!</p>
                     </div>
                 )}
+                <div className="mt-5 flex w-full justify-center">
+                    <Pagination totalPages={totalPages} />
+                </div>
             </div>
         </div>
     )

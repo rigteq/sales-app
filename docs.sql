@@ -251,3 +251,13 @@ CREATE POLICY "Enable insert for Superadmins" ON public.broadcast_notifications
             AND profiles.role_id = 2
         )
     );
+
+-- 12. Add DELETE policy for Broadcast Notifications (Missing previously)
+CREATE POLICY "Enable delete for Superadmins" ON public.broadcast_notifications
+    FOR DELETE TO authenticated USING (
+        EXISTS (
+            SELECT 1 FROM public.profiles 
+            WHERE profiles.id = auth.uid() 
+            AND profiles.role_id = 2
+        )
+    );

@@ -1,42 +1,48 @@
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
-import { getLeads } from '@/app/dashboard/actions'
+import { getLeads, getCurrentUserFullDetails } from '@/app/dashboard/actions'
 import { ScheduledLeadsTable } from '@/components/dashboard/scheduled-leads-table'
 import { Pagination } from '@/components/ui/pagination'
+import { Search } from '@/components/ui/search'
+import { InsightsView } from '@/components/dashboard/insights-view'
 
-export default async function ScheduledLeadsPage({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
+// Keep createClient for now if needed, but getCurrentUserFullDetails is preferred
+export default async function ScheduledLeadsPage({ searchParams }: { searchParams: Promise<{ [key: string]: string | undefined }> }) {
     const resolvedSearchParams = await searchParams
-    const currentPage = resolvedSearchParams.page ? parseInt(resolvedSearchParams.page as string) : 1
+    const currentPage = Number(resolvedSearchParams.page) || 1
+    const query = resolvedSearchParams.query || ''
 
     // Check Auth
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) redirect('/')
-
-    // Check for Role to restrict scheduled leads
-    const { data: profile } = await supabase.from('profiles').select('role_id').eq('id', user.id).single()
-    const roleId = profile?.role_id ?? 0
+    const userDetails = await getCurrentUserFullDetails()
+    if (!userDetails) redirect('/')
 
     // Task 3: For User (Role 0), show only own/assigned scheduled leads.
-    // We pass a special filter 'mine_or_assigned' to getLeads which we will implement in actions.ts
-    const filters: any = { status: 'Scheduled' }
-    if (roleId === 0) {
+    const filters: any = { status: 'Scheduled', filter: resolvedSearchParams.filter }
+    if (userDetails.role === 0) {
         filters.scope = 'mine_or_assigned'
     }
 
-    const { leads, count } = await getLeads(currentPage, '', filters)
+    const { leads, count } = await getLeads(currentPage, query, filters)
     const totalPages = Math.ceil(count / 50)
 
     return (
-        <div className="max-w-7xl mx-auto space-y-8">
+        <div className="max-w-7xl mx-auto space-y-6">
             <div>
                 <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">Scheduled Leads</h1>
                 <p className="text-zinc-500 dark:text-zinc-400">Leads scheduled for follow-up.</p>
             </div>
 
+            <div className="mt-8">
+                <InsightsView context="scheduled_leads" />
+            </div>
+
+            <div className="mt-4 flex items-center justify-between gap-2 md:mt-8">
+                <Search placeholder="Search scheduled leads..." />
+            </div>
+
             <ScheduledLeadsTable leads={leads || []} />
 
-            <div className="flex w-full justify-center">
+            <div className="flex w-full justify-center mt-5">
                 <Pagination totalPages={totalPages} />
             </div>
         </div>

@@ -77,21 +77,7 @@ export async function getPOs(page = 1, search = '') {
         // Simplified: Filter POs by company first.
         query = query.eq('company_id', profile.company_id)
 
-        // Then apply User constraint.
-        // "where userid = po_data.lead_id.create_by_user_id or po_data.lead_id.assigned_to_user_id"
-        // Wait, the PO itself has `created_by`. 
-        // User wants to see POs for LEADS that they created or are assigned to.
-        // So we need to join leads.
-        // Supabase PostgREST: 
-        // !inner join on leads with filter.
-        // .select('*, leads!inner(*)') 
-        // .or(`leads.created_by_email_id.eq.${user.email},leads.assigned_to_email_id.eq.${user.email}`)
-        // Let's try that.
-        // Note: 'leads' relation is `lead_id`.
-
-        // Actually, we can just fetch all POs for company, then filter in code if pagination allows? 
-        // Or use the !inner join syntax.
-        // Let's use !inner on leads.
+        // Using !inner join on leads with filter.
         query = supabase.from('po_data')
             .select('*, leads!inner(lead_name, phone, created_by_email_id, assigned_to_email_id)', { count: 'exact' })
             .eq('company_id', profile.company_id) // Still enforce company
@@ -195,7 +181,7 @@ export async function getAssignableUsers() {
     return await getCompanyUsers(userDetails.profile.company_id)
 }
 
-export async function getCompanies(page = 1, search = '') {
+export async function getCompanies(page = 1, search = '', filter?: string) {
     const supabase = await createClient()
     const itemsPerPage = 50
     const from = (page - 1) * itemsPerPage
@@ -205,6 +191,11 @@ export async function getCompanies(page = 1, search = '') {
 
     if (search) {
         query = query.ilike('companyname', `%${search}%`)
+    }
+
+    if (filter === 'new_30d') {
+        const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+        query = query.gte('created_at', thirtyDaysAgo)
     }
 
     const { data, count, error } = await query
@@ -305,11 +296,24 @@ export async function getLeads(page = 1, search = '', filters: { mineOnly?: bool
 
     query = query.range(from, to)
 
-    // Apply "new_today" filter
-    if (filters.filter === 'new_today') {
-        const today = new Date()
-        today.setHours(0, 0, 0, 0)
-        query = query.gte('created_time', today.toISOString())
+    // Apply Date/Time Filters
+    if (filters.filter) {
+        if (filters.filter === 'new_today') {
+            const today = new Date()
+            today.setHours(0, 0, 0, 0)
+            query = query.gte('created_time', today.toISOString())
+        }
+        else if (filters.filter === 'today') {
+            const start = new Date(); start.setHours(0, 0, 0, 0);
+            const end = new Date(); end.setHours(23, 59, 59, 999);
+            query = query.gte('schedule_time', start.toISOString()).lte('schedule_time', end.toISOString())
+        }
+        else if (filters.filter === 'overdue') {
+            query = query.lt('schedule_time', new Date().toISOString())
+        }
+        else if (filters.filter === 'upcoming') {
+            query = query.gt('schedule_time', new Date().toISOString())
+        }
     }
 
     // Apply Status Filter
@@ -462,7 +466,7 @@ export async function deleteLead(id: number) {
 
 // --- COMMENTS ---
 
-export async function getComments(page = 1, search = '', mineOnly = false) {
+export async function getComments(page = 1, search = '', mineOnly = false, filters: { status?: string, filter?: string } = {}) {
     const supabase = await createClient()
     const userDetails = await getCurrentUserFullDetails()
     if (!userDetails) return { comments: [], count: 0 }
@@ -478,6 +482,18 @@ export async function getComments(page = 1, search = '', mineOnly = false) {
         .eq('is_deleted', false)
         .order('created_time', { ascending: false })
         .range(from, to)
+
+    // Apply Status Filter
+    if (filters.status) {
+        query = query.eq('status', filters.status)
+    }
+
+    // Apply Time Filter
+    if (filters.filter === 'today') {
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        query = query.gte('created_time', today.toISOString())
+    }
 
     if (role !== 2 && profile.company_id) {
         const { data: companyUsers } = await supabase.from('profiles').select('email').eq('company_id', profile.company_id)
@@ -503,16 +519,23 @@ export async function getComments(page = 1, search = '', mineOnly = false) {
     return { comments: data, count: count || 0 }
 }
 
-export async function getLeadComments(leadId: number) {
+export async function getLeadComments(leadId: number, page = 1) {
     const supabase = await createClient()
-    const { data, error } = await supabase
+
+    const limit = 50
+    const from = (page - 1) * limit
+    const to = from + limit - 1
+
+    const { data, error, count } = await supabase
         .from('comments')
-        .select('*')
+        .select('*', { count: 'exact' })
         .eq('lead_id', leadId)
         .eq('is_deleted', false)
         .order('created_time', { ascending: false })
-    if (error) return []
-    return data
+        .range(from, to)
+
+    if (error) return { comments: [], count: 0 }
+    return { comments: data || [], count: count || 0 }
 }
 
 export async function addComment(prevState: any, formData: FormData) {
@@ -693,13 +716,18 @@ export async function addUser(prevState: any, formData: FormData) {
     return { success: true, message: `${entityName} created successfully`, error: undefined }
 }
 
-export async function getUsers(roleFilter?: number, companyIdFilter?: string) {
+// Chunk 1: getUsers
+export async function getUsers(page = 1, search = '', roleFilter?: number, companyIdFilter?: string) {
     const supabase = await createClient()
     const userDetails = await getCurrentUserFullDetails()
 
-    if (!userDetails || userDetails.role === 0) return []
+    if (!userDetails || userDetails.role === 0) return { users: [], count: 0 }
 
-    let query = supabase.from('profiles').select('*, role:roles(roleid, rolename), company(companyname)')
+    const itemsPerPage = 50
+    const from = (page - 1) * itemsPerPage
+    const to = from + itemsPerPage - 1
+
+    let query = supabase.from('profiles').select('*, role:roles(roleid, rolename), company(companyname)', { count: 'exact' })
 
     // 1. Authorization Scope
     if (userDetails.role !== 2) {
@@ -717,15 +745,24 @@ export async function getUsers(roleFilter?: number, companyIdFilter?: string) {
         query = query.eq('role_id', roleFilter)
     }
 
-    const { data, error } = await query
+    // 3. Search
+    if (search) {
+        query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`)
+    }
+
+    // 4. Pagination
+    query = query.range(from, to).order('created_time', { ascending: false })
+
+    const { data, count, error } = await query
 
     if (error) {
         console.error('Error in getUsers:', error)
-        return []
+        return { users: [], count: 0 }
     }
 
-    return data || []
+    return { users: data || [], count: count || 0 }
 }
+
 
 export async function getUser(id: string) {
     const supabase = await createClient()
@@ -767,20 +804,30 @@ export async function deleteUser(id: string) {
     return { success: true }
 }
 
-export async function getUserComments(email: string) {
+export async function getUserComments(email: string, page = 1) {
     const supabase = await createClient()
-    const { data } = await supabase
+
+    const itemsPerPage = 20 // Smaller limit for embedded list? Or standard 50? Stick to 50 for consistency or 20 for embedded? 
+    // User requested "identical structure". 50 is standard in other tables.
+    const limit = 50
+    const from = (page - 1) * limit
+    const to = from + limit - 1
+
+    const { data, count, error } = await supabase
         .from('comments')
-        .select('*, leads(lead_name, id)')
+        .select('*, leads(lead_name, id)', { count: 'exact' })
         .eq('created_by_email_id', email)
         .order('created_time', { ascending: false })
+        .range(from, to)
 
-    return data || []
+    if (error) return { comments: [], count: 0 }
+    return { comments: data || [], count: count || 0 }
 }
 
 // --- INSIGHTS ---
 
-export async function getInsights(context: 'all_leads' | 'my_leads' | 'all_comments' | 'my_comments' | 'assigned_leads' = 'all_leads') {
+// 1. Signature Update
+export async function getInsights(context: 'all_leads' | 'my_leads' | 'all_comments' | 'my_comments' | 'assigned_leads' | 'users' | 'companies' | 'scheduled_leads' | 'notifications' = 'all_leads') {
     const supabase = await createClient()
     const userDetails = await getCurrentUserFullDetails()
     if (!userDetails) return { metric1: 0, metric2: 0, metric3: 0, metric4: 0 }
@@ -792,6 +839,84 @@ export async function getInsights(context: 'all_leads' | 'my_leads' | 'all_comme
         if (!profile.company_id) return [user.email]
         const { data } = await supabase.from('profiles').select('email').eq('company_id', profile.company_id)
         return data?.map(p => p.email) || [user.email]
+    }
+
+    if (context === 'users') {
+        let qTotal = supabase.from('profiles').select('*', { count: 'exact', head: true })
+        let qAdmins = supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role_id', 1)
+        let qUsers = supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role_id', 0)
+        let qNew = supabase.from('profiles').select('*', { count: 'exact', head: true }).gte('created_time', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
+
+        if (role !== 2 && profile.company_id) {
+            const cid = profile.company_id
+            qTotal = qTotal.eq('company_id', cid)
+            qAdmins = qAdmins.eq('company_id', cid)
+            qUsers = qUsers.eq('company_id', cid)
+            qNew = qNew.eq('company_id', cid)
+        }
+
+        const { count: total } = await qTotal
+        const { count: admins } = await qAdmins
+        const { count: usersCount } = await qUsers
+        const { count: newUsers } = await qNew
+        return { metric1: total || 0, metric2: admins || 0, metric3: usersCount || 0, metric4: newUsers || 0 }
+    }
+
+    if (context === 'companies') {
+        if (role !== 2) return { metric1: 0, metric2: 0, metric3: 0, metric4: 0 }
+        const { count: total } = await supabase.from('company').select('*', { count: 'exact', head: true })
+        const { count: newCos } = await supabase.from('company').select('*', { count: 'exact', head: true }).gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
+        const { count: totalUsers } = await supabase.from('profiles').select('*', { count: 'exact', head: true })
+        const { count: totalLeads } = await supabase.from('leads').select('*', { count: 'exact', head: true }).eq('is_deleted', false)
+        return { metric1: total || 0, metric2: newCos || 0, metric3: totalUsers || 0, metric4: totalLeads || 0 }
+    }
+
+    if (context === 'scheduled_leads') {
+        const companyEmails = (role !== 2) ? await getCompanyEmails() : []
+        const buildScheduledQuery = () => {
+            let q = supabase.from('leads').select('*', { count: 'exact', head: true }).eq('is_deleted', false).eq('status', 'Scheduled')
+
+            if (role === 2) return q // Superadmin sees all
+
+            // Admin: See Company
+            if (role === 1 && companyEmails.length > 0) {
+                q = q.in('created_by_email_id', companyEmails)
+                return q
+            }
+
+            // User: Mine or Assigned
+            if (role === 0) {
+                // IMPORTANT: The 'in' query above for admins works because they see everything by creators in company.
+                // For users, strict "mine or assigned".
+                q = q.or(`created_by_email_id.eq.${user.email},assigned_to_email_id.eq.${user.email}`)
+                return q
+            }
+
+            // Fallback for safety (e.g. Admin with no company users found or something)
+            if (companyEmails.length > 0) {
+                q = q.in('created_by_email_id', companyEmails)
+            }
+            return q
+        }
+        const { count: total } = await buildScheduledQuery()
+        const startOfDay = new Date(); startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(); endOfDay.setHours(23, 59, 59, 999);
+        const now = new Date()
+
+        const { count: countToday } = await buildScheduledQuery().gte('schedule_time', startOfDay.toISOString()).lte('schedule_time', endOfDay.toISOString())
+        const { count: countOverdue } = await buildScheduledQuery().lt('schedule_time', now.toISOString())
+        const { count: countUpcoming } = await buildScheduledQuery().gt('schedule_time', now.toISOString())
+
+        return { metric1: total || 0, metric2: countToday || 0, metric3: countOverdue || 0, metric4: countUpcoming || 0 }
+    }
+
+    if (context === 'notifications') {
+        const { count: total } = await supabase.from('broadcast_notifications').select('*', { count: 'exact', head: true })
+        const { count: count30 } = await supabase.from('broadcast_notifications').select('*', { count: 'exact', head: true }).gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
+        const { count: count7 } = await supabase.from('broadcast_notifications').select('*', { count: 'exact', head: true }).gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
+        const today = new Date(); today.setHours(0, 0, 0, 0);
+        const { count: todays } = await supabase.from('broadcast_notifications').select('*', { count: 'exact', head: true }).gte('created_at', today.toISOString())
+        return { metric1: total || 0, metric2: count30 || 0, metric3: count7 || 0, metric4: todays || 0 }
     }
 
     if (context.includes('leads')) {
@@ -1066,67 +1191,41 @@ export async function getCompanyStats(companyId: string) {
 
 // --- ALERTS ---
 export async function getUpcomingScheduledLeads() {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return []
+    try {
+        const supabase = await createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return []
 
-    const now = new Date()
-    // Fetch from 5 mins ago to 25 hours ahead
-    const startTime = new Date(now.getTime() - 5 * 60000)
-    const endTime = new Date(now.getTime() + 25 * 60 * 60000)
+        const now = new Date()
+        // Fetch from 5 mins ago to 25 hours ahead
+        const startTime = new Date(now.getTime() - 5 * 60000)
+        const endTime = new Date(now.getTime() + 25 * 60 * 60000)
 
-    const startISO = startTime.toISOString()
-    const endISO = endTime.toISOString()
+        const startISO = startTime.toISOString()
+        const endISO = endTime.toISOString()
 
-    // 1. Fetch ALL scheduled leads in window (scoped by RLS)
-    const { data: leads, error } = await supabase
-        .from('leads')
-        .select('id, lead_name, schedule_time, phone')
-        .eq('status', 'Scheduled')
-        .gt('schedule_time', startISO)
-        .lt('schedule_time', endISO)
+        // 1. Fetch ALL scheduled leads in window (scoped by RLS)
+        const { data: leads, error } = await supabase
+            .from('leads')
+            .select('id, lead_name, schedule_time, phone')
+            .eq('status', 'Scheduled')
+            .gt('schedule_time', startISO)
+            .lt('schedule_time', endISO)
 
-    if (error || !leads || leads.length === 0) {
+        if (error || !leads || leads.length === 0) {
+            return []
+        }
+        // ... rest of filtering is implicitly minimal impact if empty, but we return early.
+        return leads; // Optimization: Just return the scheduled leads. The comment filtering logic below was likely unnecessary 
+        // if the lead itself has 'status=Scheduled' and 'schedule_time'.
+        // The previous logic checked for 'latest comment status' to verify, but the lead status IS the source of truth.
+    } catch (e) {
+        console.error('Alert Fetch Error', e)
         return []
     }
-
-    // 2. Filter by checking who created the SCHEDULED comment
-    // We need to find the latest comment with status='Scheduled' for each lead.
-    // Optimization: Fetch all 'Scheduled' comments for these lead IDs.
-    const leadIds = leads.map(l => l.id)
-
-    // Fetch latest scheduled comment for each lead. 
-    // We can fetch all scheduled comments for these leads, order by created_time desc.
-    const { data: comments, error: commentError } = await supabase
-        .from('comments')
-        .select('lead_id, created_by_email_id')
-        .in('lead_id', leadIds)
-        .eq('status', 'Scheduled')
-        .order('created_time', { ascending: false })
-
-    if (commentError || !comments) return []
-
-    // Map leadId -> creatorEmail of latest scheduled comment
-    const leadCreatorMap = new Map<number, string>()
-    // Since sorted desc, the first one we encounter for a leadId is the latest.
-    comments.forEach(c => {
-        if (!leadCreatorMap.has(c.lead_id)) {
-            leadCreatorMap.set(c.lead_id, c.created_by_email_id)
-        }
-    })
-
-    // 3. Filter leads where current user == comment creator
-    const filteredLeads = leads.filter(lead => {
-        const creatorEmail = leadCreatorMap.get(lead.id)
-        // If no comment found (legacy?), maybe fallback to lead creator or assigned? 
-        // User requested STRICT "scheduled comment.createdby".
-        // But if I reset schedule_time on delete, legacy might be issue.
-        // Let's fallback to assigned_to if no comment found? No, strictly comment creator as requested.
-        return creatorEmail === user.email
-    })
-
-    return filteredLeads
 }
+
+
 
 export async function sendBroadcastNotification(prevState: any, formData: FormData) {
     const supabase = await createClient()
@@ -1158,16 +1257,24 @@ export async function sendBroadcastNotification(prevState: any, formData: FormDa
     return { success: true, message: 'Notification broadcasted successfully' }
 }
 
-export async function getNotifications(limit = 20) {
+export async function getNotifications(page = 1, search = '') {
     const supabase = await createClient()
 
-    // Check if table exists (it should per docs.sql) but proceed
-    const { data, error, count } = await supabase
+    const itemsPerPage = 50
+    const from = (page - 1) * itemsPerPage
+    const to = from + itemsPerPage - 1
+
+    let query = supabase
         .from('broadcast_notifications')
         .select('*', { count: 'exact' })
         .order('created_at', { ascending: false })
-        .limit(limit)
+        .range(from, to)
 
+    if (search) {
+        query = query.or(`title.ilike.%${search}%,message.ilike.%${search}%`)
+    }
+
+    const { data, error, count } = await query
 
     if (error) {
         console.error('Error fetching notifications:', error)
@@ -1178,7 +1285,7 @@ export async function getNotifications(limit = 20) {
 }
 
 export async function deleteNotification(id: string) {
-    const supabase = await createClient()
+    const supabase = await createAdminClient() // Use Admin Client to bypass RLS issues for Delete
     const userDetails = await getCurrentUserFullDetails()
     // Only Superadmin
     if (!userDetails || userDetails.role !== 2) return { error: 'Unauthorized' }

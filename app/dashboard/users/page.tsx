@@ -1,8 +1,10 @@
 import { Suspense } from 'react'
 import { getUsers, getCurrentUserFullDetails, getCompanies } from '@/app/dashboard/actions'
 import { UsersTable } from '@/components/dashboard/users-table'
-import { AddUserForm } from '@/components/dashboard/add-user-form'
 import { redirect } from 'next/navigation'
+import { Search } from '@/components/ui/search'
+import { Pagination } from '@/components/ui/pagination'
+import { InsightsView } from '@/components/dashboard/insights-view'
 
 export default async function UsersPage({
     searchParams,
@@ -11,7 +13,10 @@ export default async function UsersPage({
 }) {
     const params = await searchParams
     const companyIdFilter = params.companyId
-    const roleFilter = params.role ? parseInt(params.role) : undefined
+    const roleParam = params.roleFilter || params.role
+    const roleFilter = roleParam ? parseInt(roleParam) : undefined
+    const page = Number(params?.page) || 1
+    const query = params?.query || ''
 
     const userDetails = await getCurrentUserFullDetails()
     if (!userDetails || userDetails.role === 0) {
@@ -19,12 +24,14 @@ export default async function UsersPage({
     }
 
     let targetRole = roleFilter
+    // Keep legacy support or alternative paths if needed
     if (targetRole === undefined) {
         if (params.filter === 'admins') targetRole = 1
-        else targetRole = 0
+        if (params.filter === 'users') targetRole = 0
     }
 
-    const users = await getUsers(targetRole, companyIdFilter)
+    const { users, count } = await getUsers(page, query, targetRole, companyIdFilter)
+    const totalPages = Math.ceil(count / 50)
 
     let companies: any[] = []
     if (userDetails.role === 2) {
@@ -33,7 +40,7 @@ export default async function UsersPage({
     }
 
     return (
-        <div className="w-full">
+        <div className="w-full space-y-6">
             <div className="flex w-full items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">Team Management</h1>
@@ -41,27 +48,25 @@ export default async function UsersPage({
                 </div>
             </div>
 
-            {/* Insights Placeholder - Could differ for users page, but Structure requested */}
-            {/* <div className="mt-8">
-                <InsightsView context="users" /> 
-            </div> */}
+            <div className="mt-8">
+                <InsightsView context="users" />
+            </div>
 
             <div className="mt-4 flex items-center justify-between gap-2 md:mt-8">
-                {/* Search to be implemented properly, currently just UI placeholder or client search if table handles it? 
-                     UsersTable usually does client side? No, standard is server search.
-                     But getUsers doesn't take search param yet. 
-                     I will add the Search component to match layout. 
-                  */}
-                {/* <Search placeholder="Search users..." /> */}
+                <Search placeholder="Search users..." />
             </div>
 
             <div className="space-y-4 mt-4">
                 <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-50">
-                    All {targetRole === 1 ? 'Admins' : 'Users'}
+                    {targetRole === 1 ? 'Admins' : targetRole === 0 ? 'Users' : 'All Team Members'}
                 </h2>
                 <Suspense fallback={<div className="text-center py-10">Loading users...</div>}>
                     <UsersTable users={users} showCompany={userDetails?.role === 2} />
                 </Suspense>
+
+                <div className="mt-5 flex w-full justify-center">
+                    <Pagination totalPages={totalPages} />
+                </div>
             </div>
         </div>
     )
