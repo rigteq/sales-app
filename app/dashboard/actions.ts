@@ -155,13 +155,18 @@ export async function getCurrentUserFullDetails() {
     if (!user) return null
 
     // Get Profile (with roleId) and Company
-    const { data: profile } = await supabase.from('profiles').select('*, company:company_id(*)').eq('id', user.id).single()
+    const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*, company:company_id(*)')
+        .eq('id', user.id)
+        .single()
 
-    // Role is now in profile.role_id (FK to roles table, but integer matches 0,1,2 enum like usage)
-    // Note: Postgres lowercases unquoted columns.
-    // @ts-ignore
-    const roleId = profile?.role_id ?? profile?.roleid ?? profile?.roleId ?? 0
+    if (profileError || !profile) {
+        console.log('Profile not found for user:', user.email)
+        return null
+    }
 
+    const roleId = profile?.role_id ?? 0
     return { user, profile, role: roleId as UserRole }
 }
 
@@ -727,7 +732,7 @@ export async function getUsers(page = 1, search = '', roleFilter?: number, compa
     const from = (page - 1) * itemsPerPage
     const to = from + itemsPerPage - 1
 
-    let query = supabase.from('profiles').select('*, role:roles(roleid, rolename), company(companyname)', { count: 'exact' })
+    let query = supabase.from('profiles').select('*, role:roles(role_id, role_name), company(companyname)', { count: 'exact' })
 
     // 1. Authorization Scope
     if (userDetails.role !== 2) {
@@ -769,7 +774,7 @@ export async function getUser(id: string) {
     // Join with roles and company
     const { data, error } = await supabase
         .from('profiles')
-        .select('*, role:roles(roleid, rolename), company(companyname)')
+        .select('*, role:roles(role_id, role_name), company(companyname)')
         .eq('id', id)
         .single()
 
@@ -836,9 +841,9 @@ export async function getInsights(context: 'all_leads' | 'my_leads' | 'all_comme
 
     // Helper to get company emails for filtering
     const getCompanyEmails = async () => {
-        if (!profile.company_id) return [user.email]
+        if (!profile?.company_id) return [user.email]
         const { data } = await supabase.from('profiles').select('email').eq('company_id', profile.company_id)
-        return data?.map(p => p.email) || [user.email]
+        return data?.map((p: any) => p.email) || [user.email]
     }
 
     if (context === 'users') {
@@ -847,7 +852,7 @@ export async function getInsights(context: 'all_leads' | 'my_leads' | 'all_comme
         let qUsers = supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role_id', 0)
         let qNew = supabase.from('profiles').select('*', { count: 'exact', head: true }).gte('created_time', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
 
-        if (role !== 2 && profile.company_id) {
+        if (role !== 2 && profile?.company_id) {
             const cid = profile.company_id
             qTotal = qTotal.eq('company_id', cid)
             qAdmins = qAdmins.eq('company_id', cid)
