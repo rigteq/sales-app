@@ -1,4 +1,3 @@
-
 'use client'
 
 import { ArrowLeft, ArrowRight } from 'lucide-react'
@@ -17,6 +16,9 @@ export function Pagination({ totalPages }: { totalPages: number }) {
         return `${pathname}?${params.toString()}`
     }
 
+    // Generate page numbers
+    const allPages = generatePagination(currentPage, totalPages)
+
     return (
         <div className="flex w-full justify-center">
             <div className="flex items-center gap-2">
@@ -26,13 +28,23 @@ export function Pagination({ totalPages }: { totalPages: number }) {
                     isDisabled={currentPage <= 1}
                 />
 
-                <div className="flex flex-col items-center gap-1">
-                    <span className="px-4 py-2 text-sm text-zinc-500 dark:text-zinc-400">
-                        Page {currentPage} of {totalPages === 0 ? 1 : totalPages}
-                    </span>
-                    {totalPages === 0 && (
-                        <span className="text-xs text-zinc-400 dark:text-zinc-500">No records available</span>
-                    )}
+                <div className="flex items-center gap-1">
+                    {allPages.map((page, index) => {
+                        if (page === '...') {
+                            return (
+                                <span key={index} className="px-2 text-zinc-500">...</span>
+                            )
+                        }
+
+                        return (
+                            <PaginationNumber
+                                key={index}
+                                href={createPageURL(page)}
+                                page={page}
+                                isActive={currentPage === page}
+                            />
+                        )
+                    })}
                 </div>
 
                 <PaginationArrow
@@ -42,6 +54,32 @@ export function Pagination({ totalPages }: { totalPages: number }) {
                 />
             </div>
         </div>
+    )
+}
+
+function PaginationNumber({
+    page,
+    href,
+    isActive,
+    position,
+}: {
+    page: number | string
+    href: string
+    position?: 'first' | 'last' | 'middle' | 'single'
+    isActive: boolean
+}) {
+    const className = clsx(
+        'flex h-9 w-9 items-center justify-center rounded-md border text-sm font-medium transition-colors',
+        {
+            'border-indigo-600 bg-indigo-600 text-white hover:bg-indigo-700': isActive,
+            'border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800': !isActive,
+        }
+    )
+
+    return (
+        <Link href={href} className={className}>
+            {page}
+        </Link>
     )
 }
 
@@ -55,12 +93,10 @@ function PaginationArrow({
     isDisabled?: boolean
 }) {
     const className = clsx(
-        'flex h-10 w-10 items-center justify-center rounded-md border border-zinc-200 bg-white text-zinc-900 transition hover:bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-50 dark:hover:bg-zinc-900',
+        'flex h-9 w-9 items-center justify-center rounded-md border text-slate-700 transition-colors dark:text-slate-200',
         {
-            'pointer-events-none opacity-50': isDisabled,
-            'hover:bg-zinc-100 dark:hover:bg-zinc-800': !isDisabled,
-            'mr-2': direction === 'left',
-            'ml-2': direction === 'right',
+            'pointer-events-none text-slate-300 dark:text-slate-600 border-slate-200 dark:border-slate-800': isDisabled,
+            'hover:bg-slate-100 dark:hover:bg-slate-800 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900': !isDisabled,
         }
     )
 
@@ -78,4 +114,37 @@ function PaginationArrow({
             {icon}
         </Link>
     )
+}
+
+export const generatePagination = (currentPage: number, totalPages: number) => {
+    // If the total number of pages is 7 or less,
+    // display all pages without any ellipsis.
+    if (totalPages <= 7) {
+        return Array.from({ length: totalPages }, (_, i) => i + 1)
+    }
+
+    // If the current page is among the first 3 pages,
+    // show the first 3, an ellipsis, and the last 2 pages.
+    if (currentPage <= 3) {
+        return [1, 2, 3, '...', totalPages - 1, totalPages]
+    }
+
+    // If the current page is among the last 3 pages,
+    // show the first 2, an ellipsis, and the last 3 pages.
+    if (currentPage >= totalPages - 2) {
+        return [1, 2, '...', totalPages - 2, totalPages - 1, totalPages]
+    }
+
+    // If the current page is somewhere in the middle,
+    // show the first page, an ellipsis, the current page and its neighbors,
+    // another ellipsis, and the last page.
+    return [
+        1,
+        '...',
+        currentPage - 1,
+        currentPage,
+        currentPage + 1,
+        '...',
+        totalPages,
+    ]
 }

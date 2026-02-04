@@ -27,7 +27,7 @@ export default async function UsersPage({
     // Keep legacy support or alternative paths if needed
     if (targetRole === undefined) {
         if (params.filter === 'admins') targetRole = 1
-        if (params.filter === 'users') targetRole = 0
+        else targetRole = 0 // Default to Users (Role 0) to exclude admins from mixed list
     }
 
     const { users, count } = await getUsers(page, query, targetRole, companyIdFilter)

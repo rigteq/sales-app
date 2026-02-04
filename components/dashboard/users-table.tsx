@@ -32,6 +32,9 @@ export function UsersTable({ users, showCompany }: { users: any[], showCompany?:
                             <th className="px-6 py-3">User</th>
                             <th className="px-6 py-3">Email</th>
                             {showCompany && <th className="px-6 py-3">Company</th>}
+                            <th className="px-6 py-3 text-center">Todays Comments</th>
+                            <th className="px-6 py-3 text-center">Comments (7d)</th>
+                            <th className="px-6 py-3 text-center">POs (Month)</th>
                             <th className="px-6 py-3">Phone</th>
                             <th className="px-6 py-3 w-[100px]">Actions</th>
                         </tr>
@@ -67,6 +70,15 @@ export function UsersTable({ users, showCompany }: { users: any[], showCompany?:
                                             {user.company?.companyname || '-'}
                                         </td>
                                     )}
+                                    <td className="px-6 py-4 text-center text-slate-600 dark:text-slate-400">
+                                        {user.todays_comments || 0}
+                                    </td>
+                                    <td className="px-6 py-4 text-center text-slate-600 dark:text-slate-400">
+                                        {user.comments_this_week || 0}
+                                    </td>
+                                    <td className="px-6 py-4 text-center text-slate-600 dark:text-slate-400">
+                                        {user.pos_this_month || 0}
+                                    </td>
                                     <td className="px-6 py-4 text-slate-600 dark:text-slate-400">
                                         {user.phone || '-'}
                                     </td>

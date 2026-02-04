@@ -40,6 +40,9 @@ export default async function ScheduledLeadsPage({ searchParams }: { searchParam
                 <Search placeholder="Search scheduled leads..." />
             </div>
 
+            <div className="mb-4 flex w-full justify-center">
+                <Pagination totalPages={totalPages} />
+            </div>
             <ScheduledLeadsTable leads={leads || []} />
 
             <div className="flex w-full justify-center mt-5">

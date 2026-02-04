@@ -60,13 +60,13 @@ export function LeadComments({ leadId, comments, currentStatus, currentScheduleT
     }
 
     const statusOptions = [
-        'New', 'Contacted', 'In Conversation', 'Scheduled', 'DNP',
+        'New', 'Not Interested', 'In Conversation', 'Scheduled', 'DNP',
         'Out of reach', 'Wrong details', 'PO'
     ]
 
     const statusTextMap: Record<string, string> = {
         'New': 'New Lead',
-        'Contacted': 'Sent Whatsapp',
+        'Not Interested': 'Client not interested',
         'DNP': 'Called Twice',
         'In Conversation': 'Interested',
         'Scheduled': 'Need to connect on: ',

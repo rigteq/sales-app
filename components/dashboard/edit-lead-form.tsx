@@ -9,7 +9,7 @@ import { useToast } from '@/components/ui/toast'
 
 const statusOptions = [
     'New',
-    'Contacted',
+    'Not Interested',
     'In Conversation',
     'Scheduled',
     'DNP',

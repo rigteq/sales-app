@@ -727,7 +727,7 @@ export async function getUsers(page = 1, search = '', roleFilter?: number, compa
     const from = (page - 1) * itemsPerPage
     const to = from + itemsPerPage - 1
 
-    let query = supabase.from('profiles').select('*, role:roles(roleid, rolename), company(companyname)', { count: 'exact' })
+    let query = supabase.from('profiles').select('*, role:roles(roleid, rolename), company(companyname), todays_comments(), comments_this_week(), pos_this_month()', { count: 'exact' })
 
     // 1. Authorization Scope
     if (userDetails.role !== 2) {
@@ -946,8 +946,10 @@ export async function getInsights(context: 'all_leads' | 'my_leads' | 'all_comme
             today.setHours(0, 0, 0, 0)
             qNew = qNew.gte('created_time', today.toISOString())
         } else if (context === 'my_leads') {
-            // "Contacted Today" -> Status 'Contacted'
-            qNew = qNew.eq('status', 'Contacted')
+            // "Scheduled Today" -> Status 'Scheduled' AND Schedule Time is Today
+            const starOfDay = new Date(); starOfDay.setHours(0, 0, 0, 0);
+            const endOfDay = new Date(); endOfDay.setHours(23, 59, 59, 999);
+            qNew = qNew.eq('status', 'Scheduled').gte('schedule_time', starOfDay.toISOString()).lte('schedule_time', endOfDay.toISOString())
         } else {
             // Assigned -> "New"
             qNew = qNew.eq('status', 'New')
@@ -1204,13 +1206,49 @@ export async function getUpcomingScheduledLeads() {
         const startISO = startTime.toISOString()
         const endISO = endTime.toISOString()
 
-        // 1. Fetch ALL scheduled leads in window (scoped by RLS)
-        const { data: leads, error } = await supabase
+        let query = supabase
             .from('leads')
-            .select('id, lead_name, schedule_time, phone')
+            .select('id, lead_name, schedule_time, phone, created_by_email_id, assigned_to_email_id')
             .eq('status', 'Scheduled')
             .gt('schedule_time', startISO)
             .lt('schedule_time', endISO)
+            .eq('is_deleted', false)
+
+        const userRole = (await getCurrentUserFullDetails())?.role ?? 0 // Re-fetch role to be safe/clean or pass it.
+        // Optimization: We already have 'user'. Get profile for role/company.
+        const { data: profile } = await supabase.from('profiles').select('role_id, company_id').eq('id', user.id).single()
+        // @ts-ignore
+        const roleId = profile?.role_id ?? 0
+        const companyId = profile?.company_id
+
+        if (roleId === 2) {
+            // Superadmin: No alerts? "Superadmin dont get Scheduled alerts at all."
+            return []
+        }
+
+        if (roleId === 1) {
+            // Admin: Alerts from same company
+            if (companyId) {
+                // We need to filter leads where created_by is in the company. 
+                // However, leads only store email. We need to join profiles.
+                // Using !inner join on profiles related to created_by_email_id might work but leads.created_by_email_id is text, not FK in this schema?
+                // Actually leads table doesn't have FK to profiles on email.
+                // BUT we have company_id in profiles.
+                // We can fetch company emails first.
+                const { data: companyUsers } = await supabase.from('profiles').select('email').eq('company_id', companyId)
+                const emails = companyUsers?.map(u => u.email) || []
+                if (emails.length > 0) {
+                    query = query.in('created_by_email_id', emails)
+                } else {
+                    return []
+                }
+            }
+        } else {
+            // User (0): "ONLY be shown to USER if his email is in leads.Assigned_to_email_id or leads.created_by_email_id"
+            query = query.or(`created_by_email_id.eq.${user.email},assigned_to_email_id.eq.${user.email}`)
+        }
+
+        const { data: leads, error } = await query
 
         if (error || !leads || leads.length === 0) {
             return []

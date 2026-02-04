@@ -261,3 +261,32 @@ CREATE POLICY "Enable delete for Superadmins" ON public.broadcast_notifications
             AND profiles.role_id = 2
         )
     );
+
+-- 13. Status Migration (Contacted -> Not Interested)
+UPDATE public.leads SET status = 'Not Interested' WHERE status = 'Contacted';
+UPDATE public.comments SET status = 'Not Interested' WHERE status = 'Contacted';
+
+-- 14. Computed Columns for User Stats (Task 6)
+-- Function for Today's Comments
+CREATE OR REPLACE FUNCTION todays_comments(p public.profiles) 
+RETURNS BIGINT AS $$
+  SELECT COUNT(*) FROM public.comments c 
+  WHERE c.created_by_email_id = p.email 
+  AND c.created_time >= CURRENT_DATE;
+$$ LANGUAGE sql STABLE;
+
+-- Function for Comments This Week
+CREATE OR REPLACE FUNCTION comments_this_week(p public.profiles) 
+RETURNS BIGINT AS $$
+  SELECT COUNT(*) FROM public.comments c 
+  WHERE c.created_by_email_id = p.email 
+  AND c.created_time >= (CURRENT_DATE - INTERVAL '7 days');
+$$ LANGUAGE sql STABLE;
+
+-- Function for POs This Month
+CREATE OR REPLACE FUNCTION pos_this_month(p public.profiles) 
+RETURNS BIGINT AS $$
+  SELECT COUNT(*) FROM public.po_data po 
+  WHERE po.created_by_email_id = p.email 
+  AND po.created_at >= (DATE_TRUNC('month', CURRENT_DATE));
+$$ LANGUAGE sql STABLE;

@@ -41,6 +41,9 @@ export default async function MyLeadsPage({
             <div className="mt-4 flex items-center justify-between gap-2 md:mt-8">
                 <Search placeholder="Search my leads..." />
             </div>
+            <div className="mb-4 flex w-full justify-center">
+                <Pagination totalPages={totalPages} />
+            </div>
             <Suspense fallback={<div className="text-center py-10">Loading leads...</div>}>
                 <LeadsTable leads={leads} />
             </Suspense>

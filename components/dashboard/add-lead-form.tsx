@@ -14,7 +14,7 @@ const initialState = {
 
 const statusOptions = [
     'New',
-    'Contacted',
+    'Not Interested',
     'In Conversation',
     'Scheduled',
     'DNP',

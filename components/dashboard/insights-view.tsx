@@ -7,7 +7,7 @@ export async function InsightsView({ context = 'all_leads' }: { context?: 'all_l
 
     const labels: Record<string, string[]> = {
         all_leads: ['Total Leads', 'New Today', 'In Conversation', 'Converted (PO)'],
-        my_leads: ['My Total Leads', 'Contacted Today', 'In Conversation', 'Converted (30d)'],
+        my_leads: ['My Total Leads', 'Scheduled Today', 'In Conversation', 'Converted (30d)'],
         assigned_leads: ['Assigned Leads', 'New Assigned', 'In Conversation', 'Converted'],
         all_comments: ['Total Comments', 'Comments Today', 'Conversations Today', 'POs Today'],
         my_comments: ['My Comments', 'Today', 'In Conversation Today', 'POs (30d)'],
@@ -60,7 +60,7 @@ export async function InsightsView({ context = 'all_leads' }: { context?: 'all_l
         if (index === 0) return basePath
 
         if (context === 'my_leads') {
-            if (index === 1) return `${basePath}?status=Contacted` // Contacted Today implies status=Contacted usually
+            if (index === 1) return `${basePath}?status=Scheduled` // Scheduled Today
             if (index === 2) return `${basePath}?status=In Conversation`
             if (index === 3) return `${basePath}?status=PO`
             return basePath
@@ -83,22 +83,22 @@ export async function InsightsView({ context = 'all_leads' }: { context?: 'all_l
 
     const colorConfig = [
         {
-            wrapper: 'border-blue-100 bg-gradient-to-br from-blue-50 via-white to-white dark:from-blue-950/20 dark:to-slate-900',
+            wrapper: 'border-blue-100 bg-gradient-to-br from-blue-50 via-white to-white dark:bg-slate-900 dark:border-slate-800 dark:from-transparent dark:to-transparent',
             iconBg: 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400',
             text: 'text-slate-600 dark:text-slate-400'
         },
         {
-            wrapper: 'border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-white dark:from-emerald-950/20 dark:to-slate-900',
+            wrapper: 'border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-white dark:bg-slate-900 dark:border-slate-800 dark:from-transparent dark:to-transparent',
             iconBg: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400',
             text: 'text-slate-600 dark:text-slate-400'
         },
         {
-            wrapper: 'border-amber-100 bg-gradient-to-br from-amber-50 via-white to-white dark:from-amber-950/20 dark:to-slate-900',
+            wrapper: 'border-amber-100 bg-gradient-to-br from-amber-50 via-white to-white dark:bg-slate-900 dark:border-slate-800 dark:from-transparent dark:to-transparent',
             iconBg: 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400',
             text: 'text-slate-600 dark:text-slate-400'
         },
         {
-            wrapper: 'border-violet-100 bg-gradient-to-br from-violet-50 via-white to-white dark:from-violet-950/20 dark:to-slate-900',
+            wrapper: 'border-violet-100 bg-gradient-to-br from-violet-50 via-white to-white dark:bg-slate-900 dark:border-slate-800 dark:from-transparent dark:to-transparent',
             iconBg: 'bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400',
             text: 'text-slate-600 dark:text-slate-400'
         }
