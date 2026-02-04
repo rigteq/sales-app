@@ -117,34 +117,76 @@ function PaginationArrow({
 }
 
 export const generatePagination = (currentPage: number, totalPages: number) => {
-    // If the total number of pages is 7 or less,
-    // display all pages without any ellipsis.
-    if (totalPages <= 7) {
+    // If total pages is small, show all
+    if (totalPages <= 13) {
         return Array.from({ length: totalPages }, (_, i) => i + 1)
     }
 
-    // If the current page is among the first 3 pages,
-    // show the first 3, an ellipsis, and the last 2 pages.
-    if (currentPage <= 3) {
-        return [1, 2, 3, '...', totalPages - 1, totalPages]
+    // Logic: Show [currentPage ... currentPage + 10] then '...' then [last2]
+    // But also we need to handle if we are near the end.
+
+    const pages: (number | string)[] = []
+
+    // Start from currentPage
+    // "see all pages from i to i+10"
+    // We should probably show a window starting at current or slightly before for context? 
+    // "on page i, see from i to i+10" -> Strict interpretation.
+
+    // However, usually we want to see previous pages too? 
+    // "Smart Pagination (Like LinkedIn showing 10 pages buttons..."
+    // LinkedIn usually centers the window.
+    // But user gave specific instruction: "on page i, see all pages from i to i+10".
+    // I will follow instruction: Start at `i`.
+
+    // Wait, if I am at page 50, and I only see 50..60, I can't go to 49 easily (except Prev button).
+    // This UX is slightly weird if literal.
+    // "Like LinkedIn showing 10 pages buttons" -> LinkedIn shows: 1 ... 4 5 [6] 7 8 ... 50
+    // "Currently to go to 10th page user need to click next button 10 times."
+    // User wants to jump 10 pages ahead easily?
+
+    // "i to i+10" implies seeing the *next* 10 pages.
+    // Let's implement: [currentPage, ..., currentPage + 9] (10 items), then '...', then [total-1, total].
+
+    let start = currentPage
+    let end = start + 9
+
+    // Safety check
+    if (end > totalPages) {
+        end = totalPages
+        // If we are near end, maybe show more previous? 
+        // User asked strict "i to i+10". I'll stick to mostly forward looking as requested 
+        // to solve the "click next 10 times" issue.
     }
 
-    // If the current page is among the last 3 pages,
-    // show the first 2, an ellipsis, and the last 3 pages.
-    if (currentPage >= totalPages - 2) {
-        return [1, 2, '...', totalPages - 2, totalPages - 1, totalPages]
+    // Adjust start if we want to show *some* previous context? 
+    // User said "on page i, see all pages from i to i+10". 
+    // This implies `i` is the first number in the list (besides maybe 1?).
+    // "and the last 2 pages".
+    // Does not mention first pages.
+
+    // Let's generate range [start, end]
+    for (let i = start; i <= end; i++) {
+        pages.push(i)
     }
 
-    // If the current page is somewhere in the middle,
-    // show the first page, an ellipsis, the current page and its neighbors,
-    // another ellipsis, and the last page.
-    return [
-        1,
-        '...',
-        currentPage - 1,
-        currentPage,
-        currentPage + 1,
-        '...',
-        totalPages,
-    ]
+    // Add ellipsis and last 2 if needed
+    if (end < totalPages - 2) {
+        pages.push('...')
+        pages.push(totalPages - 1)
+        pages.push(totalPages)
+    } else if (end < totalPages) {
+        // We are close to end, just append remaining
+        for (let i = end + 1; i <= totalPages; i++) {
+            pages.push(i)
+        }
+    }
+
+    // Also, if currentPage > 1, maybe show 1 ...? User didn't ask, but it's standard.
+    // "Like LinkedIn... showing 10 pages buttons".
+    // If I strictly follow "on page i, see i to i+10", then:
+    // Page 1: 1 2 3 4 5 6 7 8 9 10 ... 99 100
+    // Page 5: 5 6 7 8 9 10 11 12 13 14 ... 99 100
+    // This matches the request.
+
+    return pages
 }

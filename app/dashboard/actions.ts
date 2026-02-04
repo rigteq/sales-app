@@ -751,16 +751,51 @@ export async function getUsers(page = 1, search = '', roleFilter?: number, compa
     }
 
     // 4. Pagination
-    query = query.range(from, to).order('created_time', { ascending: false })
+    // Dual Check: Try with computed columns first. If fails (e.g. functions missing), fallback.
+    let qWithStats = query.range(from, to).order('created_time', { ascending: false })
 
-    const { data, count, error } = await query
+    // We can't clone 'query' easily differently if logic branched? 
+    // Actually supabase query builder is mutable or returns new instance? 
+    // It returns new instance usually.
 
-    if (error) {
-        console.error('Error in getUsers:', error)
+    // Attempt detailed fetch
+    const { data: dataStats, count: countStats, error: errorStats } = await qWithStats
+
+    if (!errorStats) {
+        return { users: dataStats || [], count: countStats || 0 }
+    }
+
+    console.warn('Computed columns fetch failed, falling back to basic fetch.', errorStats)
+
+    // Fallback: Remove computed columns from selection
+    // We have to rebuild the query base since we can't un-select easily.
+    // Re-build query base
+    let fallbackQuery = supabase.from('profiles').select('*, role:roles(roleid, rolename), company(companyname)', { count: 'exact' })
+
+    // Re-apply filters (Duplicate logic, but necessary for fallback)
+    if (userDetails.role !== 2) {
+        fallbackQuery = fallbackQuery.eq('company_id', userDetails.profile.company_id)
+    } else {
+        if (companyIdFilter) fallbackQuery = fallbackQuery.eq('company_id', companyIdFilter)
+    }
+    if (roleFilter !== undefined) {
+        fallbackQuery = fallbackQuery.eq('role_id', roleFilter)
+    }
+    if (search) {
+        fallbackQuery = fallbackQuery.or(`name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`)
+    }
+
+    fallbackQuery = fallbackQuery.range(from, to).order('created_time', { ascending: false })
+
+    const { data: dataFallback, count: countFallback, error: errorFallback } = await fallbackQuery
+
+    if (errorFallback) {
+        console.error('Error in getUsers Fallback:', errorFallback)
         return { users: [], count: 0 }
     }
 
-    return { users: data || [], count: count || 0 }
+    return { users: dataFallback || [], count: countFallback || 0 }
+
 }
 
 
