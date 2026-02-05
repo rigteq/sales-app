@@ -271,22 +271,22 @@ UPDATE public.comments SET status = 'Not Interested' WHERE status = 'Contacted';
 CREATE OR REPLACE FUNCTION todays_comments(p public.profiles) 
 RETURNS BIGINT AS $$
   SELECT COUNT(*) FROM public.comments c 
-  WHERE c.created_by_email_id = p.email 
+  WHERE LOWER(c.created_by_email_id) = LOWER(p.email) 
   AND c.created_time >= CURRENT_DATE;
-$$ LANGUAGE sql STABLE;
+$$ LANGUAGE sql STABLE SECURITY DEFINER;
 
 -- Function for Comments This Week
 CREATE OR REPLACE FUNCTION comments_this_week(p public.profiles) 
 RETURNS BIGINT AS $$
   SELECT COUNT(*) FROM public.comments c 
-  WHERE c.created_by_email_id = p.email 
+  WHERE LOWER(c.created_by_email_id) = LOWER(p.email) 
   AND c.created_time >= (CURRENT_DATE - INTERVAL '7 days');
-$$ LANGUAGE sql STABLE;
+$$ LANGUAGE sql STABLE SECURITY DEFINER;
 
 -- Function for POs This Month
 CREATE OR REPLACE FUNCTION pos_this_month(p public.profiles) 
 RETURNS BIGINT AS $$
   SELECT COUNT(*) FROM public.po_data po 
-  WHERE po.created_by_email_id = p.email 
+  WHERE LOWER(po.created_by_email_id) = LOWER(p.email) 
   AND po.created_at >= (DATE_TRUNC('month', CURRENT_DATE));
-$$ LANGUAGE sql STABLE;
+$$ LANGUAGE sql STABLE SECURITY DEFINER;
