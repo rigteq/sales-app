@@ -256,6 +256,7 @@ export function AddLeadForm() {
                         id="note"
                         name="note"
                         rows={3}
+                        maxLength={100}
                         placeholder="Add any additional details here..."
                         className="flex w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 dark:border-slate-800 dark:bg-slate-950 dark:placeholder:text-slate-400 dark:focus-visible:ring-indigo-500"
                     />

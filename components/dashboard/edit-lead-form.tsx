@@ -196,6 +196,7 @@ export function EditLeadForm({ lead, onCancel, assignableUsers = [] }: { lead: L
                     id="note"
                     name="note"
                     rows={4}
+                    maxLength={100}
                     defaultValue={lead.note || ''}
                     className="flex w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:border-zinc-800 dark:bg-zinc-950"
                 />
