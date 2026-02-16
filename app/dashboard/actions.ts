@@ -235,6 +235,7 @@ export async function addLead(prevState: any, formData: FormData) {
     if (phone && (phone.length !== 10 || !/^\d+$/.test(phone))) {
         return { error: 'Phone number must be exactly 10 digits.', success: false, message: '' }
     }
+    if (note && note.length > 100) return { error: 'Note should not be more than 100 chars.', success: false, message: '' }
 
     // Determine Assignment:
     // If Admin/Superadmin, use assignedTo form value, else default to self.
@@ -413,6 +414,7 @@ export async function updateLead(prevState: any, formData: FormData) {
     // Validation
     if (!phone && !email && !secondaryPhone) return { error: 'At least one contact method is required.', success: false, message: '' }
     if (phone && (phone.length !== 10 || !/^\d+$/.test(phone))) return { error: 'Phone number must be exactly 10 digits.', success: false, message: '' }
+    if (note && note.toString().length > 100) return { error: 'Note should not be more than 100 chars.', success: false, message: '' }
 
     const { error } = await supabase
         .from('leads')
@@ -727,7 +729,7 @@ export async function getUsers(page = 1, search = '', roleFilter?: number, compa
     const from = (page - 1) * itemsPerPage
     const to = from + itemsPerPage - 1
 
-    let query = supabase.from('profiles').select('*, role:roles(roleid, rolename), company(companyname), todays_comments(), comments_this_week(), pos_this_month()', { count: 'exact' })
+    let query = supabase.from('profiles').select('*, role:roles(roleid, rolename), company(companyname)', { count: 'exact' })
 
     // 1. Authorization Scope
     if (userDetails.role !== 2) {
@@ -751,51 +753,65 @@ export async function getUsers(page = 1, search = '', roleFilter?: number, compa
     }
 
     // 4. Pagination
-    // Dual Check: Try with computed columns first. If fails (e.g. functions missing), fallback.
-    let qWithStats = query.range(from, to).order('created_time', { ascending: false })
+    query = query.range(from, to).order('created_time', { ascending: false })
 
-    // We can't clone 'query' easily differently if logic branched? 
-    // Actually supabase query builder is mutable or returns new instance? 
-    // It returns new instance usually.
+    const { data: users, count, error } = await query
 
-    // Attempt detailed fetch
-    const { data: dataStats, count: countStats, error: errorStats } = await qWithStats
-
-    if (!errorStats) {
-        return { users: dataStats || [], count: countStats || 0 }
-    }
-
-    console.warn('Computed columns fetch failed, falling back to basic fetch.', errorStats)
-
-    // Fallback: Remove computed columns from selection
-    // We have to rebuild the query base since we can't un-select easily.
-    // Re-build query base
-    let fallbackQuery = supabase.from('profiles').select('*, role:roles(roleid, rolename), company(companyname)', { count: 'exact' })
-
-    // Re-apply filters (Duplicate logic, but necessary for fallback)
-    if (userDetails.role !== 2) {
-        fallbackQuery = fallbackQuery.eq('company_id', userDetails.profile.company_id)
-    } else {
-        if (companyIdFilter) fallbackQuery = fallbackQuery.eq('company_id', companyIdFilter)
-    }
-    if (roleFilter !== undefined) {
-        fallbackQuery = fallbackQuery.eq('role_id', roleFilter)
-    }
-    if (search) {
-        fallbackQuery = fallbackQuery.or(`name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`)
-    }
-
-    fallbackQuery = fallbackQuery.range(from, to).order('created_time', { ascending: false })
-
-    const { data: dataFallback, count: countFallback, error: errorFallback } = await fallbackQuery
-
-    if (errorFallback) {
-        console.error('Error in getUsers Fallback:', errorFallback)
+    if (error) {
+        console.error('Error fetching users:', error)
         return { users: [], count: 0 }
     }
 
-    return { users: dataFallback || [], count: countFallback || 0 }
+    // 5. Manual Aggregation for Stats (Robust Fix for 0/Wrong Counts)
+    if (users && users.length > 0) {
+        const emails = users.map(u => u.email).filter(e => e) as string[]
 
+        if (emails.length > 0) {
+            try {
+                // A. Comments Today
+                const today = new Date()
+                today.setHours(0, 0, 0, 0)
+                const { data: commentsToday } = await supabase.from('comments')
+                    .select('created_by_email_id')
+                    .gte('created_time', today.toISOString())
+                    .in('created_by_email_id', emails)
+                    .eq('is_deleted', false)
+
+                // B. Comments This Week (7 Days)
+                const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+                const { data: commentsWeek } = await supabase.from('comments')
+                    .select('created_by_email_id')
+                    .gte('created_time', weekAgo.toISOString())
+                    .in('created_by_email_id', emails)
+                    .eq('is_deleted', false)
+
+                // C. POs This Month
+                const now = new Date();
+                const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+                const { data: posMonth, error: poError } = await supabase.from('po_data')
+                    .select('created_by_email_id')
+                    .gte('created_at', startOfMonth.toISOString())
+                    .in('created_by_email_id', emails)
+
+                if (poError) { console.error('PO Stats Error:', poError); }
+
+                // Map counts to users
+                const userList = users as any[];
+                userList.forEach(u => {
+                    // Normalize emails just in case
+                    const uEmail = u.email?.toLowerCase()
+
+                    u.todays_comments = (commentsToday as any[])?.filter((c: any) => c.created_by_email_id?.toLowerCase() === uEmail).length || 0
+                    u.comments_this_week = (commentsWeek as any[])?.filter((c: any) => c.created_by_email_id?.toLowerCase() === uEmail).length || 0
+                    u.pos_this_month = (posMonth as any[])?.filter((p: any) => p.created_by_email_id?.toLowerCase() === uEmail).length || 0
+                })
+            } catch (e) {
+                console.error('Manual Stats Aggregation Failed:', e)
+            }
+        }
+    }
+
+    return { users: users || [], count: count || 0 }
 }
 
 
@@ -976,10 +992,8 @@ export async function getInsights(context: 'all_leads' | 'my_leads' | 'all_comme
 
         let qNew = buildLeadQuery()
         if (context === 'all_leads') {
-            // New Today
-            const today = new Date()
-            today.setHours(0, 0, 0, 0)
-            qNew = qNew.gte('created_time', today.toISOString())
+            // New Leads (Status = 'New') - Replaced "New Today"
+            qNew = qNew.eq('status', 'New')
         } else if (context === 'my_leads') {
             // "Scheduled Today" -> Status 'Scheduled' AND Schedule Time is Today
             const starOfDay = new Date(); starOfDay.setHours(0, 0, 0, 0);

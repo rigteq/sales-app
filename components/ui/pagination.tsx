@@ -21,14 +21,14 @@ export function Pagination({ totalPages }: { totalPages: number }) {
 
     return (
         <div className="flex w-full justify-center">
-            <div className="flex flex-wrap items-center justify-center gap-2">
+            <div className="flex flex-nowrap items-center justify-center gap-2 overflow-x-auto pb-1 scrollbar-hide md:overflow-visible">
                 <PaginationArrow
                     direction="left"
                     href={createPageURL(currentPage - 1)}
                     isDisabled={currentPage <= 1}
                 />
 
-                <div className="flex flex-wrap items-center justify-center gap-1">
+                <div className="flex flex-nowrap items-center justify-center gap-1">
                     {allPages.map((page, index) => {
                         if (page === '...') {
                             return (

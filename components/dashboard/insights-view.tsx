@@ -6,7 +6,7 @@ export async function InsightsView({ context = 'all_leads' }: { context?: 'all_l
     const stats = await getInsights(context)
 
     const labels: Record<string, string[]> = {
-        all_leads: ['Total Leads', 'New Today', 'In Conversation', 'Converted (PO)'],
+        all_leads: ['Total Leads', 'New Leads', 'In Conversation', 'Converted (PO)'],
         my_leads: ['My Total Leads', 'Scheduled Today', 'In Conversation', 'Converted (30d)'],
         assigned_leads: ['Assigned Leads', 'New Assigned', 'In Conversation', 'Converted'],
         all_comments: ['Total Comments', 'Comments Today', 'Conversations Today', 'POs Today'],
@@ -74,7 +74,7 @@ export async function InsightsView({ context = 'all_leads' }: { context?: 'all_l
         }
 
         // All Leads
-        if (index === 1) return `${basePath}?filter=new_today`
+        if (index === 1) return `${basePath}?status=New`
         if (index === 2) return `${basePath}?status=In Conversation`
         if (index === 3) return `${basePath}?status=PO`
 
