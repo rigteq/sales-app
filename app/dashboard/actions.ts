@@ -61,29 +61,20 @@ export async function getPOs(page = 1, search = '') {
         .order('created_at', { ascending: false })
         .range(from, to)
 
-    // Scope
+    // Role-based Scope:
+    // SuperAdmin (2): All POs across all companies
+    // Admin (1): All POs within their company scope
+    // User (0): Only POs they personally created (po_data.created_by_email_id = user.email) within company
     if (role === 2) {
-        // Superadmin: All POs. Verify if company filter needed? 
-        // "Superadmin PO list page shows all POs accross companies" -> Yes, all.
+        // Superadmin: No filter — sees all POs across all companies
     } else if (role === 1) {
-        // Admin: Company POs
+        // Admin: All POs within company scope
         query = query.eq('company_id', profile.company_id)
     } else {
-        // User: POs within company AND (created_by OR lead assigned_to)
-        // This is complex. The PO table has `created_by`. But we also want POs for leads `assigned_to` this user.
-        // We need a join or subquery.
-        // Since Supabase join filtering is limited on the 'OR' across tables without intricate syntax,
-        // we might do: POs where (created_by = user) OR (lead_id IN (leads where assigned_to = user))
-        // Simplified: Filter POs by company first.
-        query = query.eq('company_id', profile.company_id)
-
-        // Using !inner join on leads with filter.
-        query = supabase.from('po_data')
-            .select('*, leads!inner(lead_name, phone, created_by_email_id, assigned_to_email_id)', { count: 'exact' })
-            .eq('company_id', profile.company_id) // Still enforce company
-            .or(`created_by_email_id.eq.${user.email},assigned_to_email_id.eq.${user.email}`, { foreignTable: 'leads' })
-            .order('created_at', { ascending: false })
-            .range(from, to)
+        // User (role=0): Only POs created by themselves, within their company
+        query = query
+            .eq('company_id', profile.company_id)
+            .eq('created_by_email_id', user.email!)
     }
 
     const { data, count, error } = await query
@@ -95,31 +86,115 @@ export async function getPOs(page = 1, search = '') {
     return { pos: data, count: count || 0 }
 }
 
+export async function updatePO(prevState: any, formData: FormData) {
+    const supabase = await createClient()
+    const userDetails = await getCurrentUserFullDetails()
+    if (!userDetails) return { error: 'Not authenticated', success: false }
+    const { user, role, profile } = userDetails
+
+    const poId = formData.get('poId') as string
+    const amountReceived = formData.get('amountReceived')
+    const amountRemaining = formData.get('amountRemaining')
+    const releaseDate = formData.get('releaseDate')
+    const note = formData.get('note')
+
+    if (!poId) return { error: 'PO ID is required', success: false }
+
+    // Fetch the PO to verify ownership/scope
+    const { data: existingPO, error: fetchError } = await supabase
+        .from('po_data')
+        .select('id, created_by_email_id, company_id')
+        .eq('id', poId)
+        .single()
+
+    if (fetchError || !existingPO) return { error: 'PO not found', success: false }
+
+    // Role-based authorization:
+    // SuperAdmin (2): Can edit any PO
+    // Admin (1): Can edit any PO within their company
+    // User (0): Can only edit POs they created
+    if (role === 1 && existingPO.company_id !== profile.company_id) {
+        return { error: 'You can only edit POs within your company.', success: false }
+    }
+    if (role === 0 && existingPO.created_by_email_id !== user.email) {
+        return { error: 'You can only edit POs you created.', success: false }
+    }
+
+    const { error } = await supabase.from('po_data').update({
+        amount_received: amountReceived,
+        amount_remaining: amountRemaining || 0,
+        release_date: releaseDate || null,
+        note: note,
+        last_edited_at: new Date().toISOString(),
+    }).eq('id', poId)
+
+    if (error) {
+        console.error('PO Update Error', error)
+        return { error: 'Failed to update PO', success: false }
+    }
+
+    revalidatePath('/dashboard/pos')
+    return { success: true, message: 'PO Updated Successfully' }
+}
+
+export async function deletePO(poId: string) {
+    const supabase = await createClient()
+    const userDetails = await getCurrentUserFullDetails()
+    if (!userDetails) return { error: 'Not authenticated' }
+    const { user, role, profile } = userDetails
+
+    // Fetch the PO to verify ownership/scope
+    const { data: existingPO, error: fetchError } = await supabase
+        .from('po_data')
+        .select('id, created_by_email_id, company_id')
+        .eq('id', poId)
+        .single()
+
+    if (fetchError || !existingPO) return { error: 'PO not found' }
+
+    // Role-based authorization:
+    // SuperAdmin (2): Can delete any PO
+    // Admin (1): Can delete any PO within their company
+    // User (0): Can only delete POs they created
+    if (role === 1 && existingPO.company_id !== profile.company_id) {
+        return { error: 'You can only delete POs within your company.' }
+    }
+    if (role === 0 && existingPO.created_by_email_id !== user.email) {
+        return { error: 'You can only delete POs you created.' }
+    }
+
+    const { error } = await supabase.from('po_data').delete().eq('id', poId)
+
+    if (error) {
+        console.error('PO Delete Error', error)
+        return { error: 'Failed to delete PO' }
+    }
+
+    revalidatePath('/dashboard/pos')
+    return { success: true }
+}
+
 export async function getPOStats() {
     const supabase = await createClient()
     const userDetails = await getCurrentUserFullDetails()
     if (!userDetails) return { total: 0, today: 0, last7: 0, last30: 0 }
     const { user, role, profile } = userDetails
 
-    // Base Query Helper
+    // Base Query builder — mirrors the same RBAC as getPOs
+    // SuperAdmin (2): All POs
+    // Admin (1): All POs within company
+    // User (0): Only POs created by themselves within company
     const getBase = () => {
         let q = supabase.from('po_data').select('*', { count: 'exact', head: true })
 
         if (role === 1) {
             q = q.eq('company_id', profile.company_id)
         } else if (role === 0) {
-            // User Scope: Need compatible filter. 
-            // Since we can't easily do complicated joins in 'head:true' count queries without slightly more effort,
-            // let's approximate or use the same !inner logic if possible.
-            // Actually, for stats, we might need to rely on `po_data.created_by` or fetch IDs.
-            // "User PO List Page will show POs ... where userid = po.lead...assigned"
-            // If we only look at `po_data`, we miss assigned leads.
-            // Let's use the !inner join technique again.
-            q = supabase.from('po_data')
-                .select('*, leads!inner(created_by_email_id, assigned_to_email_id)', { count: 'exact', head: true })
-                .eq('company_id', profile.company_id) // company constraint
-                .or(`created_by_email_id.eq.${user.email},assigned_to_email_id.eq.${user.email}`, { foreignTable: 'leads' })
+            q = q
+                .eq('company_id', profile.company_id)
+                .eq('created_by_email_id', user.email!)
         }
+        // role === 2 (Superadmin): no filter applied
         return q
     }
 
