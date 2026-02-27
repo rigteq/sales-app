@@ -1,23 +1,17 @@
-import { getPOs, getPOStats } from '@/app/dashboard/actions'
+import { getPOs, getPOStats, getCurrentUserFullDetails } from '@/app/dashboard/actions'
 import { POsTable } from '@/components/dashboard/pos/pos-table'
-import { InsightsView } from '@/components/dashboard/insights-view' // Wait, InsightsView is generic. 
-// User wants specialized PO insights. 
-// "Superadmin Insights (Total POs, Todays POs, POs last 7 days, POs last 30 days)"
-// I already implemented existing InsightsView for leads/comments.
-// I should create a new `POInsightsView` or adapt `InsightsView`.
-// Let's create a new component inline or separate? Separate is better.
-
 import { Briefcase, Calendar, CheckCircle2 } from 'lucide-react'
+import { Pagination } from '@/components/ui/pagination'
 
 // --- PO Insights Component ---
 async function POInsights() {
     const stats = await getPOStats()
 
     const cards = [
-        { label: 'Total POs', value: stats.total, icon: Briefcase, color: 'blue' },
-        { label: 'POs Today', value: stats.today, icon: CheckCircle2, color: 'emerald' },
-        { label: 'POs Last 7 Days', value: stats.last7, icon: Calendar, color: 'amber' },
-        { label: 'POs Last 30 Days', value: stats.last30, icon: Calendar, color: 'violet' },
+        { label: 'Total POs', value: stats.total, icon: Briefcase },
+        { label: 'POs Today', value: stats.today, icon: CheckCircle2 },
+        { label: 'POs Last 7 Days', value: stats.last7, icon: Calendar },
+        { label: 'POs Last 30 Days', value: stats.last30, icon: Calendar },
     ]
 
     return (
@@ -26,7 +20,7 @@ async function POInsights() {
                 <div key={i} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 transition-all hover:shadow-md">
                     <div className="flex items-center justify-between">
                         <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">{card.label}</h3>
-                        <div className={`p-1.5 rounded-lg bg-slate-50 dark:bg-slate-800`}>
+                        <div className="p-1.5 rounded-lg bg-slate-50 dark:bg-slate-800">
                             <card.icon className="h-4 w-4 text-slate-500 dark:text-slate-400" />
                         </div>
                     </div>
@@ -39,8 +33,6 @@ async function POInsights() {
     )
 }
 
-import { Pagination } from '@/components/ui/pagination'
-
 export default async function POsPage({
     searchParams,
 }: {
@@ -51,10 +43,15 @@ export default async function POsPage({
     const searchParamsValue = await searchParams
     const currentPage = Number(searchParamsValue?.page) || 1
 
-    // Fetch Data
-    const { pos, count } = await getPOs(currentPage)
+    // Fetch Data and current user details (for RBAC in the table)
+    const [{ pos, count }, userDetails] = await Promise.all([
+        getPOs(currentPage),
+        getCurrentUserFullDetails(),
+    ])
 
     const totalPages = Math.ceil(count / 50)
+    const userRole = userDetails?.role ?? 0
+    const userEmail = userDetails?.user?.email ?? ''
 
     return (
         <div className="w-full space-y-8">
@@ -64,7 +61,7 @@ export default async function POsPage({
 
             <POInsights />
 
-            <POsTable pos={pos} />
+            <POsTable pos={pos} userRole={userRole} userEmail={userEmail} />
 
             <div className="flex w-full justify-center">
                 <Pagination totalPages={totalPages} />
